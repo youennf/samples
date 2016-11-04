@@ -35,8 +35,8 @@
 
     <h1><a href="//webrtc.github.io/samples/" title="WebRTC samples homepage">WebRTC samples</a> <span>Stream from canvas to peer connection</span></h1>
 
-    <canvas></canvas>
-    <video autoplay controls></video>
+    <canvas id="canvas" width=200px height=200px></canvas>
+    <video autoplay id="video" width=200px height=200px controls></video>
 
     <p>Click and drag on the canvas element (on the left) to move the teapot.</p>
 
@@ -56,15 +56,40 @@
 
   </div>
 
-  <!-- Teapot code -->
-  <script src="js/third_party/webgl-utils.js"></script>
-  <script src="js/third_party/webgl-debug.js"></script>
-  <script src="js/third_party/matrix4x4.js"></script>
-  <script src="js/third_party/cameracontroller.js"></script>
-  <script src="js/third_party/teapot-streams.js"></script>
-  <script src="js/third_party/demo.js"></script>
+  <script>
+var canvas = document.getElementById("canvas");
 
-  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+var goUp = true;
+var color = 0;
+function drawRectangle()
+{
+    if (goUp) {
+        color += 5;
+        if (color == 255)
+            goUp = false;
+    } else {
+        color -= 5;
+         if (color == 0)
+             goUp = true;
+    }
+
+    var context = canvas.getContext("2d");
+
+    context.strokeStyle = "rgb(0, 0, " + color + ")";
+    context.fillStyle = "rgb(0, " + color + ", 0)";
+    context.fillRect(0, 0 , 200, 200);
+    context.stroke();
+
+//    context.fillStyle = "rgba(" + (255 - color) + ", 0, 255, " + (1 - color / 255) + ")";
+//    context.fillRect(50, 50 , 100, 100);
+
+    setTimeout(drawRectangle, 50);
+}
+
+drawRectangle();
+  </script>
+
+  <script src="../../../js/adapter.js"></script>
   <script src="../../../js/common.js"></script>
   <script src="js/main.js"></script>
 
