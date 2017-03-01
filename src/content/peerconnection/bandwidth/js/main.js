@@ -73,14 +73,10 @@ function call() {
   };
   pc1 = new RTCPeerConnection(servers, pcConstraints);
   trace('Created local peer connection object pc1');
-  pc1.onicecandidate = function(e) {
-    onIceCandidate(pc1, e);
-  };
+  pc1.onicecandidate = iceCallback1;
   pc2 = new RTCPeerConnection(servers, pcConstraints);
   trace('Created remote peer connection object pc2');
-  pc2.onicecandidate = function(e) {
-    onIceCandidate(pc2, e);
-  };
+  pc2.onicecandidate = iceCallback2;
   pc2.onaddstream = gotRemoteStream;
   trace('Requesting local stream');
   navigator.mediaDevices.getUserMedia({
@@ -144,26 +140,28 @@ function gotRemoteStream(e) {
   trace('Received remote stream');
 }
 
-function getOtherPc(pc) {
-  return (pc === pc1) ? pc2 : pc1;
+function iceCallback1(event) {
+  if (event.candidate) {
+    pc2.addIceCandidate(
+      new RTCIceCandidate(event.candidate)
+    ).then(
+      onAddIceCandidateSuccess,
+      onAddIceCandidateError
+    );
+    trace('Local ICE candidate: \n' + event.candidate.candidate);
+  }
 }
 
-function getName(pc) {
-  return (pc === pc1) ? 'pc1' : 'pc2';
-}
-
-function onIceCandidate(pc, event) {
-  getOtherPc(pc).addIceCandidate(event.candidate)
-  .then(
-    function() {
-      onAddIceCandidateSuccess(pc);
-    },
-    function(err) {
-      onAddIceCandidateError(pc, err);
-    }
-  );
-  trace(getName(pc) + ' ICE candidate: \n' + (event.candidate ?
-      event.candidate.candidate : '(null)'));
+function iceCallback2(event) {
+  if (event.candidate) {
+    pc1.addIceCandidate(
+      new RTCIceCandidate(event.candidate)
+    ).then(
+      onAddIceCandidateSuccess,
+      onAddIceCandidateError
+    );
+    trace('Remote ICE candidate: \n ' + event.candidate.candidate);
+  }
 }
 
 function onAddIceCandidateSuccess() {
@@ -222,7 +220,8 @@ window.setInterval(function() {
     return;
   }
   window.pc1.getStats(null).then(function(res) {
-    res.forEach(function(report) {
+    Object.keys(res).forEach(function(key) {
+      var report = res[key];
       var bytes;
       var packets;
       var now = report.timestamp;
@@ -231,10 +230,10 @@ window.setInterval(function() {
           (report.type === 'ssrc' && report.bytesSent)) {
         bytes = report.bytesSent;
         packets = report.packetsSent;
-        if (lastResult && lastResult.get(report.id)) {
+        if (lastResult && lastResult[report.id]) {
           // calculate bitrate
-          var bitrate = 8 * (bytes - lastResult.get(report.id).bytesSent) /
-              (now - lastResult.get(report.id).timestamp);
+          var bitrate = 8 * (bytes - lastResult[report.id].bytesSent) /
+              (now - lastResult[report.id].timestamp);
 
           // append to chart
           bitrateSeries.addPoint(now, bitrate);
@@ -243,7 +242,7 @@ window.setInterval(function() {
 
           // calculate number of packets and append to chart
           packetSeries.addPoint(now, packets -
-              lastResult.get(report.id).packetsSent);
+              lastResult[report.id].packetsSent);
           packetGraph.setDataSeries([packetSeries]);
           packetGraph.updateEndDate();
         }

@@ -15,10 +15,7 @@ var test = require('tape');
 var webdriver = require('selenium-webdriver');
 var seleniumHelpers = require('webrtc-utilities').seleniumLib;
 
-// Disabled for Firefox due not supporting DTMF.
-// Disabled due to being flaky on Chrome.
-// TODO(jansson): Fix flakiness
-test('DTMF tones',{skip: true}, function(t) {
+test('DTMF tones', function(t) {
   if (process.env.BROWSER === 'firefox') {
     t.pass('Firefox not supported yet');
     t.end();

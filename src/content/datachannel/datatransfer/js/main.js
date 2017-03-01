@@ -62,9 +62,7 @@ function createConnection() {
 
   sendChannel.onopen = onSendChannelStateChange;
   sendChannel.onclose = onSendChannelStateChange;
-  localConnection.onicecandidate = function(e) {
-    onIceCandidate(localConnection, e);
-  };
+  localConnection.onicecandidate = iceCallback1;
 
   localConnection.createOffer().then(
     gotDescription1,
@@ -77,9 +75,7 @@ function createConnection() {
       pcConstraint);
   trace('Created remote peer connection object remoteConnection');
 
-  remoteConnection.onicecandidate = function(e) {
-    onIceCandidate(remoteConnection, e);
-  };
+  remoteConnection.onicecandidate = iceCallback2;
   remoteConnection.ondatachannel = receiveChannelCallback;
 }
 
@@ -172,27 +168,30 @@ function gotDescription2(desc) {
   localConnection.setRemoteDescription(desc);
 }
 
-function getOtherPc(pc) {
-  return (pc === localConnection) ? remoteConnection : localConnection;
+function iceCallback1(event) {
+  trace('local ice callback');
+  if (event.candidate) {
+    remoteConnection.addIceCandidate(
+      event.candidate
+    ).then(
+      onAddIceCandidateSuccess,
+      onAddIceCandidateError
+    );
+    trace('Local ICE candidate: \n' + event.candidate.candidate);
+  }
 }
 
-function getName(pc) {
-  return (pc === localConnection) ? 'localPeerConnection' :
-      'remotePeerConnection';
-}
-
-function onIceCandidate(pc, event) {
-  getOtherPc(pc).addIceCandidate(event.candidate)
-  .then(
-    function() {
-      onAddIceCandidateSuccess(pc);
-    },
-    function(err) {
-      onAddIceCandidateError(pc, err);
-    }
-  );
-  trace(getName(pc) + ' ICE candidate: \n' + (event.candidate ?
-      event.candidate.candidate : '(null)'));
+function iceCallback2(event) {
+  trace('remote ice callback');
+  if (event.candidate) {
+    localConnection.addIceCandidate(
+      event.candidate
+    ).then(
+      onAddIceCandidateSuccess,
+      onAddIceCandidateError
+    );
+    trace('Remote ICE candidate: \n ' + event.candidate.candidate);
+  }
 }
 
 function onAddIceCandidateSuccess() {

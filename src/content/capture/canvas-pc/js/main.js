@@ -136,17 +136,17 @@ function onCreateAnswerSuccess(desc) {
 }
 
 function onIceCandidate(pc, event) {
-  getOtherPc(pc).addIceCandidate(event.candidate)
-  .then(
-    function() {
-      onAddIceCandidateSuccess(pc);
-    },
-    function(err) {
-      onAddIceCandidateError(pc, err);
-    }
-  );
-  trace(getName(pc) + ' ICE candidate: \n' + (event.candidate ?
-      event.candidate.candidate : '(null)'));
+  if (event.candidate) {
+    getOtherPc(pc).addIceCandidate(new RTCIceCandidate(event.candidate),
+        function() {
+          onAddIceCandidateSuccess(pc);
+        },
+        function(err) {
+          onAddIceCandidateError(pc, err);
+        }
+    );
+    trace(getName(pc) + ' ICE candidate: \n' + event.candidate.candidate);
+  }
 }
 
 function onAddIceCandidateSuccess(pc) {

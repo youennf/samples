@@ -76,23 +76,22 @@ test('Fake device selection and check video element dimensions ' +
         return driver.executeScript('return stream.getAudioTracks()[0].label');
       })
       .then(function(deviceLabel) {
-        var fakeAudioDeviceNames = null;
+        var fakeAudioDeviceName = null;
 
         switch (browser) {
         case 'chrome':
-          fakeAudioDeviceNames = ['Fake Audio 1', 'Fake Default Audio Input'];
+          fakeAudioDeviceName = 'Fake Audio 1';
           break;
         case 'firefox':
           // TODO: Remove the "deviceLabel === ''" check once Firefox ESR
           // reaches 46 (supports device labels for fake devices).
-          fakeAudioDeviceNames = ['', 'Default Audio Device'];
+          fakeAudioDeviceName = (deviceLabel === '') ? '' :
+              'Default Audio Device';
           break;
         default:
           t.skip('unsupported browser');
         }
-        console.log(fakeAudioDeviceNames, deviceLabel,
-            fakeAudioDeviceNames.indexOf(deviceLabel));
-        t.ok(fakeAudioDeviceNames.indexOf(deviceLabel) !== -1,
+        t.ok(fakeAudioDeviceName === deviceLabel,
           'Fake audio device found with label: ' + deviceLabel);
       })
       // Check for a fake video device label (Chrome only).

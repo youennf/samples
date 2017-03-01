@@ -154,9 +154,7 @@ function createPeerConnection() {
 
   localPeerConnection = new RTCPeerConnection(servers);
   trace('Created local peer connection object localPeerConnection');
-  localPeerConnection.onicecandidate = function(e) {
-    onIceCandidate(localPeerConnection, e);
-  };
+  localPeerConnection.onicecandidate = iceCallback1;
   if (RTCPeerConnection.prototype.createDataChannel) {
     sendChannel = localPeerConnection.createDataChannel('sendDataChannel',
         dataChannelOptions);
@@ -167,9 +165,7 @@ function createPeerConnection() {
 
   remotePeerConnection = new RTCPeerConnection(servers);
   trace('Created remote peer connection object remotePeerConnection');
-  remotePeerConnection.onicecandidate = function(e) {
-    onIceCandidate(remotePeerConnection, e);
-  };
+  remotePeerConnection.onicecandidate = iceCallback2;
   remotePeerConnection.onaddstream = gotRemoteStream;
   remotePeerConnection.ondatachannel = receiveChannelCallback;
 
@@ -297,28 +293,28 @@ function gotRemoteStream(e) {
   trace('Received remote stream');
 }
 
-function getOtherPc(pc) {
-  return (pc === localPeerConnection) ? remotePeerConnection :
-      localPeerConnection;
+function iceCallback1(event) {
+  if (event.candidate) {
+    remotePeerConnection.addIceCandidate(
+      new RTCIceCandidate(event.candidate)
+    ).then(
+      onAddIceCandidateSuccess,
+      onAddIceCandidateError
+    );
+    trace('Local ICE candidate: \n' + event.candidate.candidate);
+  }
 }
 
-function getName(pc) {
-  return (pc === localPeerConnection) ? 'localPeerConnection' :
-      'remotePeerConnection';
-}
-
-function onIceCandidate(pc, event) {
-  getOtherPc(pc).addIceCandidate(event.candidate)
-  .then(
-    function() {
-      onAddIceCandidateSuccess(pc);
-    },
-    function(err) {
-      onAddIceCandidateError(pc, err);
-    }
-  );
-  trace(getName(pc) + ' ICE candidate: \n' + (event.candidate ?
-      event.candidate.candidate : '(null)'));
+function iceCallback2(event) {
+  if (event.candidate) {
+    localPeerConnection.addIceCandidate(
+      new RTCIceCandidate(event.candidate)
+    ).then(
+      onAddIceCandidateSuccess,
+      onAddIceCandidateError
+    );
+    trace('Remote ICE candidate: \n ' + event.candidate.candidate);
+  }
 }
 
 function onAddIceCandidateSuccess() {

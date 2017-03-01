@@ -20,10 +20,11 @@
 
   <base target="_blank">
 
-  <title>ICE Restart</title>
+  <title>Peer connection: video only</title>
 
   <link rel="icon" sizes="192x192" href="../../../images/webrtc-icon-192x192.png">
   <link href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
+  <link href="//fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css">
   <link rel="stylesheet" href="../../../css/main.css" />
   <link rel="stylesheet" href="css/main.css" />
 
@@ -33,38 +34,45 @@
 
   <div id="container">
 
-    <h1><a href="//webrtc.github.io/samples/" title="WebRTC samples homepage">WebRTC samples</a> <span>Peer connection</span></h1>
+    <h1><a href="//webrtc.github.io/samples/" title="WebRTC samples homepage">WebRTC samples</a> <span>Peer connection: video only</span></h1>
 
     <div id="video">
       <div>
-        <video id="localVideo" autoplay muted></video>
-        <p id="localAddress">Not connected.</p>
-      </div>
-      <div>
-        <video id="remoteVideo" autoplay muted></video>
-        <p id="remoteAddress">Not connected.</p>
+        <div class="label">video:</div><video id="video" autoplay controls muted></video>
       </div>
     </div>
 
-    <div>
-      <button id="startButton">Start</button>
+    <div id="buttons">
+      <select id="codec">
+        <!-- Codec values are matched with how they appear in the SDP.
+        For instance, opus matches opus/48000/2 in Chrome, and ISAC/16000
+        matches 16K iSAC (but not 32K iSAC). -->
+        <option value="opus">Opus</option>
+        <option value="ISAC">iSAC 16K</option>
+        <option value="G722">G722</option>
+        <option value="PCMU">PCMU</option>
+      </select>
       <button id="callButton">Call</button>
-      <button id="restartButton">Restart ICE</button>
+      <button id="showLocalButton">Show Local</button>
       <button id="hangupButton">Hang Up</button>
     </div>
+    <div class="graph-container" id="bitrateGraph">
+      <div>Bitrate</div>
+      <canvas id="bitrateCanvas"></canvas>
+    </div>
+    <div class="graph-container" id="packetGraph">
+      <div>Packets sent per second</div>
+      <canvas id="packetCanvas"></canvas>
+    </div>
 
-    <p>View the console to see logging. The <code>MediaStream</code> object <code>localStream</code>, and the <code>RTCPeerConnection</code> objects <code>localPeerConnection</code> and <code>remotePeerConnection</code> are in global scope, so you can inspect them in the console as well.</p>
-
-    <p>For more information about RTCPeerConnection, see <a href="http://www.html5rocks.com/en/tutorials/webrtc/basics/" title="HTML5 Rocks article about WebRTC by Sam Dutton">Getting Started With WebRTC</a>.</p>
-
-
-    <a href="https://github.com/webrtc/samples/tree/gh-pages/src/content/peerconnection/restart-ice" title="View source for this page on GitHub" id="viewSource">View source on GitHub</a>
+    <a href="https://github.com/webrtc/samples/tree/gh-pages/src/content/peerconnection/audio" title="View source for this page on GitHub" id="viewSource">View source on GitHub</a>
 
   </div>
+<script src="/socket.io/socket.io.js"></script>
 
-  <script src="../../../js/adapter.js"></script>
   <script src="../../../js/common.js"></script>
   <script src="js/main.js"></script>
+  <script src="../../../js/third_party/graph.js"></script>
 
   <script src="../../../js/lib/ga.js"></script>
 </body>

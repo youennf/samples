@@ -10,21 +10,21 @@
 'use strict';
 
 var express = require('express');
-var https = require('https');
-var pem = require('pem');
+var http = require('http');
 
-pem.createCertificate({days: 1, selfSigned: true}, function(err, keys) {
-  var options = {
-    key: keys.serviceKey,
-    cert: keys.certificate
-  };
+var app = express();
 
-  var app = express();
+app.use(express.static('../'));
 
-  app.use(express.static('../'));
+// Create an HTTP service.
+var server = http.createServer(app).listen(8002);
+var io = require('socket.io')(server);
 
-  // Create an HTTPS service.
-  https.createServer(options, app).listen(8080);
-
-  console.log('serving on https://localhost:8080');
+io.on('connection', function (socket) {
+    console.log("socket connected");
+    socket.on('message', function (message) {
+        console.log(message);
+        socket.broadcast.send(message);
+    });
 });
+console.log('serving on http://localhost:8002');

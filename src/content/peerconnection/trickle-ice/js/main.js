@@ -75,8 +75,6 @@ function start() {
     candidateTBody.removeChild(candidateTBody.firstChild);
   }
 
-  gatherButton.disabled = true;
-
   // Read the values from the input boxes.
   var iceServers = [];
   for (var i = 0; i < servers.length; ++i) {
@@ -105,6 +103,7 @@ function start() {
   trace('Creating new PeerConnection with config=' + JSON.stringify(config) +
         ', constraints=' + JSON.stringify(pcConstraints));
   pc = new RTCPeerConnection(config, pcConstraints);
+  pc.createDataChannel("");
   pc.onicecandidate = iceCallback;
   pc.createOffer(
     offerOptions
@@ -220,7 +219,6 @@ function iceCallback(event) {
     appendCell(row, getFinalResult(), 7);
     pc.close();
     pc = null;
-    gatherButton.disabled = false;
   }
   candidateTBody.appendChild(row);
 }
