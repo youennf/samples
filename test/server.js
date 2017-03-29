@@ -16,7 +16,8 @@ var app = express();
 app.use(express.static('../'));
 
 // Create an HTTP service.
-var server = http.createServer(app).listen(8080);
+var port = 8888;
+var server = http.createServer(app).listen(port);
 var io = require('socket.io')(server);
 
 io.on('connection', function (socket) {
@@ -26,4 +27,4 @@ io.on('connection', function (socket) {
         socket.broadcast.send(message);
     });
 });
-console.log('serving on http://localhost:8080');
+console.log('serving on http://localhost:' + port);

@@ -110,6 +110,7 @@ function call() {
     onIceStateChange(pc2, e);
   };
   pc2.onaddstream = gotRemoteStream;
+  pc2.ontrack = gotRemoteTrack;
 
   pc1.addStream(localStream);
   trace('Added local stream to pc1');
@@ -163,6 +164,11 @@ function onSetRemoteSuccess(pc) {
 
 function onSetSessionDescriptionError(error) {
   trace('Failed to set session description: ' + error.toString());
+}
+
+function gotRemoteTrack(e) {
+  //remoteVideo.srcObject = e.streams[0];
+  trace('pc2 received remote track');
 }
 
 function gotRemoteStream(e) {
