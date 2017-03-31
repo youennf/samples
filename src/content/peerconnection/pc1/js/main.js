@@ -70,12 +70,12 @@ function start() {
   trace('Requesting local stream');
   startButton.disabled = true;
   navigator.mediaDevices.getUserMedia({
-    audio: true,
-    video: true
+    audio: false,
+    video: { width: 640, height: 480 }
   })
   .then(gotStream)
   .catch(function(e) {
-    alert('getUserMedia() error: ' + e.name);
+    alert('getUserMedia() error: ' + e);
   });
 }
 
