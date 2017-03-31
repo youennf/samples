@@ -73,7 +73,7 @@ function start() {
   startButton.disabled = true;
   navigator.mediaDevices.getUserMedia({
     audio: false,
-    video: { width: 640, height: 480 }
+    video: { width: 1280, height: 960 }
   })
   .then(gotStream)
   .catch(function(e) {
@@ -81,12 +81,16 @@ function start() {
   });
 }
 
+var shouldSwitchToHigh = false;
 function change()
 {
     if (!localStream)
         return;
 
-    localStream.applyConstraints({video: 1280, height: 960}).then(() => console.log("resize ok", (error) => console.log(error)));
+    var constraints = shouldSwitchToHigh ? {video: 1280, height: 960} : {video: 320, height: 240};
+    shouldSwitchToHigh = !shouldSwitchToHigh;
+    changeButton.innerHTML = "Go " + (shouldSwitchToHigh ? "higher" : "lower");
+    localStream.getVideoTracks()[0].applyConstraints(constraints).then(() => console.log("resize ok"), (error) => console.log(error));
 }
 
 function call() {
