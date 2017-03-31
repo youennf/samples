@@ -15,10 +15,9 @@ button#hangupButton {
 }
 
 video {
-  height: 225px;
+  width: 640px;
   margin: 0 0 20px 0;
   vertical-align: top;
-  width: calc(50% - 12px);
 }
 
 video#localVideo {
@@ -36,9 +35,8 @@ video#localVideo {
 
 
   video {
-    height: 90px;
+    width: 320px;
     margin: 0 0 10px 0;
-    width: calc(50% - 7px);
   }
   video#localVideo {
     margin: 0 10px 20px 0;
