@@ -66,7 +66,7 @@ function gotStream(stream) {
   localVideo.srcObject = stream;
   localStream = stream;
   callButton.disabled = false;
-  localVideo.onplay = () => { setTimeout(drawCanvas, 50) };
+  setTimeout(drawCanvas, 500);
 }
 
 function start() {
@@ -252,8 +252,10 @@ function drawCanvas()
         canvas = document.querySelector('#localCanvas');
         canvas.width = localVideo.videoWidth;
         canvas.height = localVideo.videoHeight;
-        localCanvasStream = canvas.captureStream();
-        localCanvasVideo.srcObject = localCanvasStream;
+        setTimeout(() => {
+          localCanvasStream = canvas.captureStream();
+          localCanvasVideo.srcObject = localCanvasStream;
+        }, 100);
     }
     var context = canvas.getContext("2d");
     context.translate(canvas.width, canvas.height);
