@@ -206,6 +206,7 @@ function gotRemoteStream(e) {
 
 var isLocalClapping = true;
 var clappingThreshold = 0.1;
+var isLocalRed = true;
 function detectLocalClapping()
 {
     if (isLocalClapping) {
@@ -219,6 +220,9 @@ function detectLocalClapping()
             trace("start of local clapping");
             trace("setting enabled video track to " + !localStream.getVideoTracks()[0].enabled);
             localStream.getVideoTracks()[0].enabled = !localStream.getVideoTracks()[0].enabled;
+            localVideo.style.borderColor = "green";
+            isLocalRed = !isLocalRed;
+            localVideo.style.borderColor = isLocalRed ? "red" : "green";
         }
     }
     window.requestAnimationFrame(detectLocalClapping);
@@ -229,7 +233,6 @@ function isBlackFrame(canvas)
     var data = canvas.getContext('2d').getImageData(0, 0, 50, 50).data;
     for (var cptr = 0; cptr < data.length / 4; ++cptr) {
         if (data[4 * cptr] != 0 || data[4 * cptr + 1] != 0 || data[4 * cptr + 2] != 0 || data[4 * cptr + 3] != 255) {
-            console.log(cptr);
             return false;
         }
     }
@@ -238,6 +241,7 @@ function isBlackFrame(canvas)
 
 var isRemoteVideoTrackBlack = false;
 var isRemoteClapping = false;
+var isRemoteRed = true;
 function detectRemoteTracksChanges()
 {
     canvas.getContext('2d').drawImage(remoteVideo, 0, 0, 640, 480);
@@ -254,6 +258,8 @@ function detectRemoteTracksChanges()
         if (remoteSoundMeter.instant.toFixed(2) > clappingThreshold) {
             isRemoteClapping = true;
             trace("start of remote clapping");
+            isRemoteRed = !isRemoteRed;
+            remoteVideo.style.borderColor = isRemoteRed ? "red" : "green";
         }
     }
     window.requestAnimationFrame(detectRemoteTracksChanges);

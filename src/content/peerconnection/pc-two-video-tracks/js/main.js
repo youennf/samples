@@ -266,7 +266,7 @@ function drawCanvas()
     context.fillStyle = "blue";
     context.fillText("other cam", 100 ,100);
 
-    setTimeout(drawCanvas, 50);
+    setTimeout(drawCanvas, 40);
   } catch(e) {
     alert(e);
   }
