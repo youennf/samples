@@ -9,6 +9,7 @@
 
 'use strict';
 
+var video1 = document.querySelector('video#video1');
 var video2 = document.querySelector('video#video2');
 var callButton = document.querySelector('button#callButton');
 var hangupButton = document.querySelector('button#hangupButton');
@@ -37,7 +38,7 @@ var offerOptions = {
 
 var socket = io('/');
 socket.on('connect', function () {
-    alert('connected');
+    console.log('connected');
     socket.on('message', function (msg) {
         console.log(msg);
         var message = JSON.parse(msg);
@@ -45,22 +46,66 @@ socket.on('connect', function () {
           pc2.addIceCandidate(new RTCIceCandidate(message.data)).then(onAddIceCandidateSuccess, onAddIceCandidateError);
         else if (message.type === "iceCandidate2")
           pc1.addIceCandidate(new RTCIceCandidate(message.data)).then(onAddIceCandidateSuccess, onAddIceCandidateError);
-        else if (message.type === "gotDescription1")
-            pc2.setRemoteDescription(message.data).then(function() { pc2.createAnswer().then(gotDescription2, onCreateSessionDescriptionError); }, onSetSessionDescriptionError);
+        else if (message.type === "gotDescription1") {
+            pc2.setRemoteDescription(message.data).then(() => {
+                pc2.createAnswer().then(gotDescription2, onCreateSessionDescriptionError);
+            }, onSetSessionDescriptionError);
+        }
         else if (message.type === "gotDescription2")
             pc1.setRemoteDescription(message.data).then(function() { }, onSetSessionDescriptionError);
      });
 });
 
+function onCreateSessionDescriptionError(error) {
+  trace('Failed to create session description: ' + error.toString());
+}
+
+var servers = null;
+var pcConstraints = {
+  'optional': []
+};
+pc1 = new RTCPeerConnection(servers, pcConstraints);
+pc2 = new RTCPeerConnection(servers, pcConstraints);
+trace('Created local peer connection object pc1');
+pc1.onicecandidate = iceCallback1;
+trace('Created remote peer connection object pc2');
+pc2.onicecandidate = iceCallback2;
+pc1.onaddstream = gotRemoteStream;
+pc2.onaddstream = gotRemoteStream;
+
+function capture()
+{
+  trace('Requesting local stream');
+  navigator.mediaDevices.getUserMedia({
+    audio: true,
+    video: true
+  })
+  .then(gotStream)
+  .catch(function(e) {
+    alert('getUserMedia() error: ' + e);
+  });
+}
+
 function gotStream(stream) {
   hangupButton.disabled = false;
   trace('Received local stream');
   localStream = stream;
+
+  video1.srcObject = localStream;
+}
+
+
+function call() {
+  callButton.disabled = true;
+  codecSelector.disabled = true;
+  trace('Starting call');
+
   var videoTracks = localStream.getVideoTracks();
   if (videoTracks.length > 0) {
     trace('Using Video device: ' + videoTracks[0].label);
   }
   pc1.addStream(localStream);
+  pc2.addStream(localStream);
   trace('Adding Local Stream to peer connection');
 
   pc1.createOffer(
@@ -77,37 +122,6 @@ function gotStream(stream) {
   packetSeries = new TimelineDataSeries();
   packetGraph = new TimelineGraphView('packetGraph', 'packetCanvas');
   packetGraph.updateEndDate();
-}
-
-function onCreateSessionDescriptionError(error) {
-  trace('Failed to create session description: ' + error.toString());
-}
-
-var servers = null;
-var pcConstraints = {
-  'optional': []
-};
-pc1 = new RTCPeerConnection(servers, pcConstraints);
-trace('Created local peer connection object pc1');
-pc1.onicecandidate = iceCallback1;
-pc2 = new RTCPeerConnection(servers, pcConstraints);
-trace('Created remote peer connection object pc2');
-pc2.onicecandidate = iceCallback2;
-pc2.onaddstream = gotRemoteStream;
-
-function call() {
-  callButton.disabled = true;
-  codecSelector.disabled = true;
-  trace('Starting call');
-  trace('Requesting local stream');
-  navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: true
-  })
-  .then(gotStream)
-  .catch(function(e) {
-    alert('getUserMedia() error: ' + e);
-  });
 }
 
 function gotDescription1(desc) {
@@ -325,3 +339,5 @@ window.setInterval(function() {
     lastResult = res;
   });
 }, 1000);
+
+capture();
