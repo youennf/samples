@@ -169,8 +169,8 @@ function onSetSessionDescriptionError(error) {
   trace('Failed to set session description: ' + error.toString());
 }
 
-var firstTrack = true;
 function gotRemoteTrack(e) {
+  var firstTrack = e.track.id === localStream.getVideoTracks()[0].id;
   var stream = new MediaStream([e.track]);
   if (firstTrack)
     remoteVideo.srcObject = stream;

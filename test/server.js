@@ -16,7 +16,7 @@ var app = express();
 app.use(express.static('../'));
 
 // Create an HTTP service.
-var port = 8888;
+var port = 8000;
 var server = http.createServer(app).listen(port);
 var io = require('socket.io')(server);
 

@@ -30,12 +30,6 @@ var packetSeries;
 
 var lastResult;
 
-var offerOptions = {
-  offerToReceiveAudio: 1,
-  offerToReceiveVideo: 0,
-  voiceActivityDetection: false
-};
-
 var socket = io('/');
 socket.on('connect', function () {
     console.log('connected');
@@ -61,11 +55,8 @@ function onCreateSessionDescriptionError(error) {
 }
 
 var servers = null;
-var pcConstraints = {
-  'optional': []
-};
-pc1 = new RTCPeerConnection(servers, pcConstraints);
-pc2 = new RTCPeerConnection(servers, pcConstraints);
+pc1 = new RTCPeerConnection(servers);
+pc2 = new RTCPeerConnection(servers);
 trace('Created local peer connection object pc1');
 pc1.onicecandidate = iceCallback1;
 trace('Created remote peer connection object pc2');
@@ -87,15 +78,17 @@ function capture()
 }
 
 function gotStream(stream) {
-  hangupButton.disabled = false;
+  callButton.disabled = false;
   trace('Received local stream');
   localStream = stream;
 
   video1.srcObject = localStream;
+  pc1.addStream(localStream);
+  pc2.addStream(localStream);
 }
 
-
 function call() {
+  hangupButton.disabled = false;
   callButton.disabled = true;
   codecSelector.disabled = true;
   trace('Starting call');
@@ -104,13 +97,9 @@ function call() {
   if (videoTracks.length > 0) {
     trace('Using Video device: ' + videoTracks[0].label);
   }
-  pc1.addStream(localStream);
-  pc2.addStream(localStream);
   trace('Adding Local Stream to peer connection');
 
-  pc1.createOffer(
-    offerOptions
-  ).then(
+  pc1.createOffer().then(
     gotDescription1,
     onCreateSessionDescriptionError
   );
