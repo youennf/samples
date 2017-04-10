@@ -58,7 +58,7 @@ pc.onaddstream = gotRemoteStream;
 function capture()
 {
   trace('Requesting local stream');
-  navigator.mediaDevices.getUserMedia({ audio: false, video: true }).then(gotStream).catch(function(e) {
+  navigator.mediaDevices.getUserMedia({ audio: false, video: {width: 640, height: 480} }).then(gotStream).catch(function(e) {
     alert('getUserMedia() error: ' + e);
   });
 }
