@@ -34,6 +34,7 @@ socket.on('connect', function () {
             pc.addIceCandidate(candidate).then(onAddIceCandidateSuccess, onAddIceCandidateError);
           }
         } else if (message.type === "offer") {
+          video2.setAttribute("class", "connecting");
           pc.setRemoteDescription(message.data).then(() => {
             return pc.createAnswer();
           }, onSetSessionDescriptionError).then(desc => {
@@ -72,12 +73,27 @@ function gotStream(stream) {
   pc.addStream(localStream);
 }
 
+var reachedConnected = false;
+pc.oniceconnectionstatechange = () => {
+    if (pc.iceConnectionState == "closed") {
+        video2.removeAttribute("class");
+        return;
+    }
+    if (pc.iceConnectionState == "connected")
+        reachedConnected = true;
+    else if (pc.iceConnectionState == "failed" || pc.iceConnectionState == "disconnected")
+        reachedConnected = false;
+    var isConnected = pc.iceConnectionState == "connected" || (pc.iceConnectionState == "completed" && reachedConnected);
+    video2.setAttribute("class", isConnected ? "connected" : "connecting");
+}
+
 function call() {
   isCalling = true;
   hangupButton.disabled = false;
   callButton.disabled = true;
   trace('Starting call');
 
+  video2.setAttribute("class", "connecting");
   var videoTracks = localStream.getVideoTracks();
   if (videoTracks.length > 0) {
     trace('Using Video device: ' + videoTracks[0].label);

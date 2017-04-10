@@ -25,6 +25,14 @@ div#audio > div {
   margin: 0 0 20px 0;
 }
 
+.connected {
+  border: solid green 4px;
+}
+
+.connecting {
+  border: solid red 10px;
+}
+
 div.label {
   display: inline-block;
   font-weight: 400;
