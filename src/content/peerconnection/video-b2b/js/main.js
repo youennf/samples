@@ -13,7 +13,6 @@ var video1 = document.querySelector('video#video1');
 var video2 = document.querySelector('video#video2');
 var callButton = document.querySelector('button#callButton');
 var hangupButton = document.querySelector('button#hangupButton');
-var codecSelector = document.querySelector('select#codec');
 hangupButton.disabled = true;
 callButton.onclick = call;
 hangupButton.onclick = hangup;
@@ -77,7 +76,6 @@ function call() {
   isCalling = true;
   hangupButton.disabled = false;
   callButton.disabled = true;
-  codecSelector.disabled = true;
   trace('Starting call');
 
   var videoTracks = localStream.getVideoTracks();
@@ -102,7 +100,6 @@ function hangup() {
   pc = null;
   hangupButton.disabled = true;
   callButton.disabled = false;
-  codecSelector.disabled = false;
 }
 
 function gotRemoteStream(e) {
