@@ -98,7 +98,9 @@ function start() {
   });
 }
 
+var startTimestamp;
 function call() {
+  startTimestamp = window.performance.now();
   callButton.disabled = true;
   hangupButton.disabled = false;
   trace('Starting call');
@@ -131,6 +133,7 @@ function call() {
   pc2.onaddstream = gotRemoteStream;
   pc2.ontrack = gotRemoteTrack;
   pc2.ondatachannel = (event) => {
+      document.getElementById("start").innerHTML = ((window.performance.now() - startTimestamp) / 1000).toFixed(3);
       event.channel.onmessage = (message) => {
         document.getElementById("dataLatency").innerHTML = ((window.performance.now() - localChannelTimestamp) / 1000).toFixed(3);
       }
