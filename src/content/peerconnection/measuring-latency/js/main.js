@@ -52,6 +52,8 @@ try {
 }
 
 var localStream;
+var localChannel;
+var localChannelTimestamp;
 var pc1;
 var pc2;
 var offerOptions = {
@@ -80,7 +82,6 @@ function gotStream(stream) {
       alert(e);
       return;
     }
-    window.requestAnimationFrame(detectLocalClapping);
   });
 }
 
@@ -129,6 +130,14 @@ function call() {
   };
   pc2.onaddstream = gotRemoteStream;
   pc2.ontrack = gotRemoteTrack;
+  pc2.ondatachannel = (event) => {
+      event.channel.onmessage = (message) => {
+        document.getElementById("dataLatency").innerHTML = ((window.performance.now() - localChannelTimestamp) / 1000).toFixed(3);
+      }
+  };
+
+  localChannel = pc1.createDataChannel("test");
+  localChannel.onopen = () => { console.log("starting data channel"); sendMessage(); };
 
   pc1.addStream(localStream);
   trace('Added local stream to pc1');
@@ -140,6 +149,15 @@ function call() {
     onCreateOfferSuccess,
     onCreateSessionDescriptionError
   );
+}
+
+function sendMessage()
+{
+    if (localChannel.readyState !== "open")
+        return;
+    localChannelTimestamp = window.performance.now();
+    localChannel.send("Data channel latency message");
+    setTimeout(sendMessage, 500);
 }
 
 function onCreateSessionDescriptionError(error) {
@@ -201,12 +219,21 @@ function gotRemoteStream(e) {
       return;
     }
   });
-  remoteVideo.onplay = () => { window.requestAnimationFrame(detectRemoteTracksChanges); };
+  remoteVideo.onplay = () => { window.requestAnimationFrame(detectChanges); };
+}
+
+function detectChanges()
+{
+    detectLocalClapping();
+    detectRemoteTracksChanges();
+    window.requestAnimationFrame(detectChanges);
 }
 
 var isLocalClapping = true;
-var clappingThreshold = 0.1;
+var localClappingTimestamp;
+var clappingThreshold = 0.05;
 var isLocalRed = true;
+var lastDetectionTimestamp = 0;
 function detectLocalClapping()
 {
     if (isLocalClapping) {
@@ -216,6 +243,7 @@ function detectLocalClapping()
         }
     } else {
         if (localSoundMeter.instant.toFixed(2) > clappingThreshold) {
+            localClappingTimestamp = window.performance.now();
             isLocalClapping = true;
             trace("start of local clapping");
             trace("setting enabled video track to " + !localStream.getVideoTracks()[0].enabled);
@@ -223,22 +251,25 @@ function detectLocalClapping()
             localVideo.style.borderColor = "green";
             isLocalRed = !isLocalRed;
             localVideo.style.borderColor = isLocalRed ? "red" : "green";
+            document.getElementById("uncertainty").innerHTML = 2 * ((window.performance.now() - lastDetectionTimestamp) / 1000).toFixed(3);
         }
     }
-    window.requestAnimationFrame(detectLocalClapping);
+    lastDetectionTimestamp = window.performance.now();
 }
 
 function isBlackFrame(canvas)
 {
     var data = canvas.getContext('2d').getImageData(0, 0, 50, 50).data;
     for (var cptr = 0; cptr < data.length / 4; ++cptr) {
-        if (data[4 * cptr] != 0 || data[4 * cptr + 1] != 0 || data[4 * cptr + 2] != 0 || data[4 * cptr + 3] != 255) {
+        if (data[4 * cptr] > 10 || data[4 * cptr + 1] > 10 || data[4 * cptr + 2] > 10 || data[4 * cptr + 3] != 255) {
             return false;
         }
     }
     return true;
 }
 
+var audioLatency = 0;
+var videoLatency = 0;
 var isRemoteVideoTrackBlack = false;
 var isRemoteClapping = false;
 var isRemoteRed = true;
@@ -246,6 +277,9 @@ function detectRemoteTracksChanges()
 {
     canvas.getContext('2d').drawImage(remoteVideo, 0, 0, 640, 480);
     if (isRemoteVideoTrackBlack != isBlackFrame(canvas)) {
+        videoLatency = window.performance.now() - localClappingTimestamp;
+        document.getElementById("videoLatency").innerHTML = (videoLatency / 1000).toFixed(3);
+        document.getElementById("avSync").innerHTML = ((videoLatency - audioLatency) / 1000).toFixed(3);
         isRemoteVideoTrackBlack = !isRemoteVideoTrackBlack;
         trace('got ' + (isRemoteVideoTrackBlack ? 'black' : 'real') + ' frame');
     }
@@ -256,13 +290,15 @@ function detectRemoteTracksChanges()
         }
     } else {
         if (remoteSoundMeter.instant.toFixed(2) > clappingThreshold) {
+            audioLatency = window.performance.now() - localClappingTimestamp;
+            document.getElementById("audioLatency").innerHTML = ((audioLatency) / 1000).toFixed(3);
+            document.getElementById("avSync").innerHTML = ((videoLatency - audioLatency) / 1000).toFixed(3);
             isRemoteClapping = true;
             trace("start of remote clapping");
             isRemoteRed = !isRemoteRed;
             remoteVideo.style.borderColor = isRemoteRed ? "red" : "green";
         }
     }
-    window.requestAnimationFrame(detectRemoteTracksChanges);
 }
 
 function onCreateAnswerSuccess(desc) {

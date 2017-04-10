@@ -18,17 +18,9 @@ hangupButton.disabled = true;
 callButton.onclick = call;
 hangupButton.onclick = hangup;
 
-var pc1;
-var pc2;
+var pc;
 var localStream;
-
-var bitrateGraph;
-var bitrateSeries;
-
-var packetGraph;
-var packetSeries;
-
-var lastResult;
+var isCalling = false;
 
 var socket = io('/');
 socket.on('connect', function () {
@@ -36,17 +28,22 @@ socket.on('connect', function () {
     socket.on('message', function (msg) {
         console.log(msg);
         var message = JSON.parse(msg);
-        if (message.type === "iceCandidate1")
-          pc2.addIceCandidate(new RTCIceCandidate(message.data)).then(onAddIceCandidateSuccess, onAddIceCandidateError);
-        else if (message.type === "iceCandidate2")
-          pc1.addIceCandidate(new RTCIceCandidate(message.data)).then(onAddIceCandidateSuccess, onAddIceCandidateError);
-        else if (message.type === "gotDescription1") {
-            pc2.setRemoteDescription(message.data).then(() => {
-                pc2.createAnswer().then(gotDescription2, onCreateSessionDescriptionError);
-            }, onSetSessionDescriptionError);
+        if ((message.type === "callingCandidate" && !isCalling) || (message.type === "calledCandidate" && isCalling)) {
+          trace('Remote ICE candidate: \n' + JSON.stringify(message.data));
+          if (message.data) {
+            var candidate = new RTCIceCandidate(message.data);
+            pc.addIceCandidate(candidate).then(onAddIceCandidateSuccess, onAddIceCandidateError);
+          }
+        } else if (message.type === "offer") {
+          pc.setRemoteDescription(message.data).then(() => {
+            return pc.createAnswer();
+          }, onSetSessionDescriptionError).then(desc => {
+            pc.setLocalDescription(desc);
+            socket.send(JSON.stringify({"type": "answer", data: desc}));
+          }, onCreateSessionDescriptionError);
         }
-        else if (message.type === "gotDescription2")
-            pc1.setRemoteDescription(message.data).then(function() { }, onSetSessionDescriptionError);
+        else if (message.type === "answer")
+            pc.setRemoteDescription(message.data).then(function() { }, onSetSessionDescriptionError);
      });
 });
 
@@ -54,25 +51,15 @@ function onCreateSessionDescriptionError(error) {
   trace('Failed to create session description: ' + error.toString());
 }
 
-var servers = null;
-pc1 = new RTCPeerConnection(servers);
-pc2 = new RTCPeerConnection(servers);
-trace('Created local peer connection object pc1');
-pc1.onicecandidate = iceCallback1;
-trace('Created remote peer connection object pc2');
-pc2.onicecandidate = iceCallback2;
-pc1.onaddstream = gotRemoteStream;
-pc2.onaddstream = gotRemoteStream;
+trace('Created peer connection object pc');
+pc = new RTCPeerConnection();
+pc.onicecandidate = iceCallback;
+pc.onaddstream = gotRemoteStream;
 
 function capture()
 {
   trace('Requesting local stream');
-  navigator.mediaDevices.getUserMedia({
-    audio: true,
-    video: true
-  })
-  .then(gotStream)
-  .catch(function(e) {
+  navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(gotStream).catch(function(e) {
     alert('getUserMedia() error: ' + e);
   });
 }
@@ -83,11 +70,11 @@ function gotStream(stream) {
   localStream = stream;
 
   video1.srcObject = localStream;
-  pc1.addStream(localStream);
-  pc2.addStream(localStream);
+  pc.addStream(localStream);
 }
 
 function call() {
+  isCalling = true;
   hangupButton.disabled = false;
   callButton.disabled = true;
   codecSelector.disabled = true;
@@ -99,55 +86,11 @@ function call() {
   }
   trace('Adding Local Stream to peer connection');
 
-  pc1.createOffer().then(
-    gotDescription1,
-    onCreateSessionDescriptionError
-  );
-
-  bitrateSeries = new TimelineDataSeries();
-  bitrateGraph = new TimelineGraphView('bitrateGraph', 'bitrateCanvas');
-  bitrateGraph.updateEndDate();
-
-  packetSeries = new TimelineDataSeries();
-  packetGraph = new TimelineGraphView('packetGraph', 'packetCanvas');
-  packetGraph.updateEndDate();
-}
-
-function gotDescription1(desc) {
-  trace('Offer from pc1 \n' + desc.sdp);
-  pc1.setLocalDescription(desc).then(
-    function() {
-      //desc.sdp = forceChosenAudioCodec(desc.sdp);
-      socket.send(JSON.stringify({"type": "gotDescription1", data: desc}));
-
-//      pc2.setRemoteDescription(desc).then(
-//        function() {
-//          pc2.createAnswer().then(
-//            gotDescription2,
-//            onCreateSessionDescriptionError
-//          );
-//        },
-//        onSetSessionDescriptionError
-//      );
-    },
-    onSetSessionDescriptionError
-  );
-}
-
-function gotDescription2(desc) {
-  trace('Answer from pc2 \n' + desc.sdp);
-  pc2.setLocalDescription(desc).then(
-    function() {
-      //desc.sdp = forceChosenAudioCodec(desc.sdp);
-      socket.send(JSON.stringify({"type": "gotDescription2", data: desc}));
-//      pc1.setRemoteDescription(desc).then(
-//        function() {
-//        },
-//        onSetSessionDescriptionError
-//      );
-    },
-    onSetSessionDescriptionError
-  );
+  pc.createOffer().then((desc) => {
+    pc.setLocalDescription(desc).then(() => {
+      socket.send(JSON.stringify({"type": "offer", data: desc}));
+    }, onSetSessionDescriptionError);
+  },onCreateSessionDescriptionError);
 }
 
 function hangup() {
@@ -155,10 +98,8 @@ function hangup() {
   localStream.getTracks().forEach(function(track) {
     track.stop();
   });
-  pc1.close();
-  pc2.close();
-  pc1 = null;
-  pc2 = null;
+  pc.close();
+  pc = null;
   hangupButton.disabled = true;
   callButton.disabled = false;
   codecSelector.disabled = false;
@@ -169,30 +110,9 @@ function gotRemoteStream(e) {
   trace('Received remote stream');
 }
 
-function iceCallback1(event) {
-  if (event.candidate) {
-    socket.send(JSON.stringify({"type": "iceCandidate1", data: event.candidate}))
-//      pc2.addIceCandidate(
-//      new RTCIceCandidate(event.candidate)
-//    ).then(
-//      onAddIceCandidateSuccess,
-//      onAddIceCandidateError
-//    );
-    trace('Local ICE candidate: \n' + event.candidate.candidate);
-  }
-}
-
-function iceCallback2(event) {
-  if (event.candidate) {
-    socket.send(JSON.stringify({"type": "iceCandidate2", data: event.candidate}))
-//    pc1.addIceCandidate(
-//      new RTCIceCandidate(event.candidate)
-//    ).then(
-//      onAddIceCandidateSuccess,
-//      onAddIceCandidateError
-//    );
-    trace('Remote ICE candidate: \n ' + event.candidate.candidate);
-  }
+function iceCallback(event) {
+  trace('Local ICE candidate: \n' + JSON.stringify(event.candidate));
+  socket.send(JSON.stringify({ "type": (isCalling ? "callingCandidate" : "calledCandidate"), data: event.candidate }));
 }
 
 function onAddIceCandidateSuccess() {
@@ -206,127 +126,5 @@ function onAddIceCandidateError(error) {
 function onSetSessionDescriptionError(error) {
   trace('Failed to set session description: ' + error.toString());
 }
-
-function forceChosenAudioCodec(sdp) {
-  return maybePreferCodec(sdp, 'audio', 'send', codecSelector.value);
-}
-
-// Copied from AppRTC's sdputils.js:
-
-// Sets |codec| as the default |type| codec if it's present.
-// The format of |codec| is 'NAME/RATE', e.g. 'opus/48000'.
-function maybePreferCodec(sdp, type, dir, codec) {
-  var str = type + ' ' + dir + ' codec';
-  if (codec === '') {
-    trace('No preference on ' + str + '.');
-    return sdp;
-  }
-
-  trace('Prefer ' + str + ': ' + codec);
-
-  var sdpLines = sdp.split('\r\n');
-
-  // Search for m line.
-  var mLineIndex = findLine(sdpLines, 'm=', type);
-  if (mLineIndex === null) {
-    return sdp;
-  }
-
-  // If the codec is available, set it as the default in m line.
-  var codecIndex = findLine(sdpLines, 'a=rtpmap', codec);
-  console.log('codecIndex', codecIndex);
-  if (codecIndex) {
-    var payload = getCodecPayloadType(sdpLines[codecIndex]);
-    if (payload) {
-      sdpLines[mLineIndex] = setDefaultCodec(sdpLines[mLineIndex], payload);
-    }
-  }
-
-  sdp = sdpLines.join('\r\n');
-  return sdp;
-}
-
-// Find the line in sdpLines that starts with |prefix|, and, if specified,
-// contains |substr| (case-insensitive search).
-function findLine(sdpLines, prefix, substr) {
-  return findLineInRange(sdpLines, 0, -1, prefix, substr);
-}
-
-// Find the line in sdpLines[startLine...endLine - 1] that starts with |prefix|
-// and, if specified, contains |substr| (case-insensitive search).
-function findLineInRange(sdpLines, startLine, endLine, prefix, substr) {
-  var realEndLine = endLine !== -1 ? endLine : sdpLines.length;
-  for (var i = startLine; i < realEndLine; ++i) {
-    if (sdpLines[i].indexOf(prefix) === 0) {
-      if (!substr ||
-          sdpLines[i].toLowerCase().indexOf(substr.toLowerCase()) !== -1) {
-        return i;
-      }
-    }
-  }
-  return null;
-}
-
-// Gets the codec payload type from an a=rtpmap:X line.
-function getCodecPayloadType(sdpLine) {
-  var pattern = new RegExp('a=rtpmap:(\\d+) \\w+\\/\\d+');
-  var result = sdpLine.match(pattern);
-  return (result && result.length === 2) ? result[1] : null;
-}
-
-// Returns a new m= line with the specified codec as the first one.
-function setDefaultCodec(mLine, payload) {
-  var elements = mLine.split(' ');
-
-  // Just copy the first three parameters; codec order starts on fourth.
-  var newLine = elements.slice(0, 3);
-
-  // Put target payload first and copy in the rest.
-  newLine.push(payload);
-  for (var i = 3; i < elements.length; i++) {
-    if (elements[i] !== payload) {
-      newLine.push(elements[i]);
-    }
-  }
-  return newLine.join(' ');
-}
-
-// query getStats every second
-window.setInterval(function() {
-  if (!window.pc1) {
-    return;
-  }
-  window.pc1.getStats(null).then(function(res) {
-    Object.keys(res).forEach(function(key) {
-      var report = res[key];
-      var bytes;
-      var packets;
-      var now = report.timestamp;
-      if ((report.type === 'outboundrtp') ||
-          (report.type === 'outbound-rtp') ||
-          (report.type === 'ssrc' && report.bytesSent)) {
-        bytes = report.bytesSent;
-        packets = report.packetsSent;
-        if (lastResult && lastResult[report.id]) {
-          // calculate bitrate
-          var bitrate = 8 * (bytes - lastResult[report.id].bytesSent) /
-              (now - lastResult[report.id].timestamp);
-
-          // append to chart
-          bitrateSeries.addPoint(now, bitrate);
-          bitrateGraph.setDataSeries([bitrateSeries]);
-          bitrateGraph.updateEndDate();
-
-          // calculate number of packets and append to chart
-          packetSeries.addPoint(now, packets -
-              lastResult[report.id].packetsSent);
-          packetGraph.setDataSeries([packetSeries]);
-          packetGraph.updateEndDate();
-        }
-      }
-    });
-    lastResult = res;
-  });
-}, 1000);
 
 capture();
