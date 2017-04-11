@@ -13,9 +13,15 @@ var video1 = document.querySelector('video#video1');
 var video2 = document.querySelector('video#video2');
 var callButton = document.querySelector('button#callButton');
 var hangupButton = document.querySelector('button#hangupButton');
+var dataButton = document.querySelector('button#dataToggle');
+var audioButton = document.querySelector('button#audioToggle');
+var videoButton = document.querySelector('button#videoToggle');
 hangupButton.disabled = true;
 callButton.onclick = call;
 hangupButton.onclick = hangup;
+dataButton.onclick = toggleData;
+audioButton.onclick = toggleAudio;
+videoButton.onclick = toggleVideo;
 
 var pc;
 var localStream;
@@ -36,6 +42,7 @@ socket.on('connect', function () {
         } else if (message.type === "offer") {
           video2.setAttribute("class", "connecting");
           pc.setRemoteDescription(message.data).then(() => {
+            addMediaData();
             return pc.createAnswer();
           }, onSetSessionDescriptionError).then(desc => {
             pc.setLocalDescription(desc);
@@ -59,7 +66,7 @@ pc.onaddstream = gotRemoteStream;
 function capture()
 {
   trace('Requesting local stream');
-  navigator.mediaDevices.getUserMedia({ audio: false, video: {width: 640, height: 480} }).then(gotStream).catch(function(e) {
+  navigator.mediaDevices.getUserMedia({ audio: true, video: {width: 640, height: 480} }).then(gotStream).catch(function(e) {
     alert('getUserMedia() error: ' + e);
   });
 }
@@ -70,7 +77,6 @@ function gotStream(stream) {
   localStream = stream;
 
   video1.srcObject = localStream;
-  pc.addStream(localStream);
 }
 
 var reachedConnected = false;
@@ -87,6 +93,39 @@ pc.oniceconnectionstatechange = () => {
     video2.setAttribute("class", isConnected ? "connected" : "connecting");
 }
 
+var useData = true;
+function toggleData()
+{
+    useData = !useData;
+    dataButton.innerHTML = useData ? "Data" : "No data";
+}
+
+var useAudio = true;
+function toggleAudio()
+{
+    useAudio = !useAudio;
+    audioButton.innerHTML = useAudio ? "Audio" : "No audio";
+}
+
+var useVideo = true;
+function toggleVideo()
+{
+    useVideo = !useVideo;
+    videoButton.innerHTML = useVideo ? "Video" : "No video";
+}
+
+function addMediaData()
+{
+  if (useAudio && useVideo)
+      pc.addStream(localStream);
+  else if (useVideo)
+    pc.addStream(new MediaStream([localStream.getVideoTracks()[0]]));
+  else if(useAudio)
+    pc.addStream(new MediaStream([localStream.getAudioTracks()[0]]));
+  if (useData)
+      pc.createDataChannel("data channel");
+}
+
 function call() {
   isCalling = true;
   hangupButton.disabled = false;
@@ -99,7 +138,7 @@ function call() {
     trace('Using Video device: ' + videoTracks[0].label);
   }
   trace('Adding Local Stream to peer connection');
-
+  addMediaData();
   pc.createOffer().then((desc) => {
     pc.setLocalDescription(desc).then(() => {
       socket.send(JSON.stringify({"type": "offer", data: desc}));
