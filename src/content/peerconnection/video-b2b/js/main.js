@@ -16,6 +16,7 @@ var hangupButton = document.querySelector('button#hangupButton');
 var dataButton = document.querySelector('button#dataToggle');
 var audioButton = document.querySelector('button#audioToggle');
 var videoButton = document.querySelector('button#videoToggle');
+var stateDiv = document.querySelector('div#state');
 hangupButton.disabled = true;
 callButton.onclick = call;
 hangupButton.onclick = hangup;
@@ -79,8 +80,19 @@ function gotStream(stream) {
   video1.srcObject = localStream;
 }
 
+function updateState()
+{
+    if (stateDiv.innerHTML)
+        stateDiv.innerHTML += ", ";
+    stateDiv.innerHTML += pc.iceConnectionState;
+    if (pc.connectionState)
+        stateDiv.innerHTML +=  "/" + pc.connectionState;
+}
+
+
 var reachedConnected = false;
 pc.oniceconnectionstatechange = () => {
+    updateState();
     if (pc.iceConnectionState == "closed") {
         video2.removeAttribute("class");
         return;
@@ -91,6 +103,10 @@ pc.oniceconnectionstatechange = () => {
         reachedConnected = false;
     var isConnected = pc.iceConnectionState == "connected" || (pc.iceConnectionState == "completed" && reachedConnected);
     video2.setAttribute("class", isConnected ? "connected" : "connecting");
+}
+
+pc.onconnectionstatechange = () => {
+    updateState();
 }
 
 var useData = true;
