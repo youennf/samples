@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "express": "^4.14.1",
+    "rasterizehtml": "*",
     "socket.io": "*"
   },
   "devDependencies": {
@@ -40,6 +41,7 @@
     "pem": "^1.9.4",
     "webrtc-utilities": "^1.0.0",
     "socket.io": "*",
-    "webrtc-adapter": "^1.1.0"
+    "webrtc-adapter": "^1.1.0",
+    "rasterizehtml": "*"
   }
 }

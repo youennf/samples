@@ -62,7 +62,13 @@ function onCreateSessionDescriptionError(error) {
 trace('Created peer connection object pc');
 pc = new RTCPeerConnection();
 pc.onicecandidate = iceCallback;
-pc.onaddstream = gotRemoteStream;
+if (pc.addStream)
+  pc.onaddstream = gotRemoteStream;
+else {
+    pc.ontrack = (event) => {
+        gotRemoteStream(event.streams[0]);
+    }
+}
 
 function capture()
 {
@@ -132,12 +138,19 @@ function toggleVideo()
 
 function addMediaData()
 {
-  if (useAudio && useVideo)
+  if (pc.addStream) {
+    if (useAudio && useVideo)
       pc.addStream(localStream);
-  else if (useVideo)
-    pc.addStream(new MediaStream([localStream.getVideoTracks()[0]]));
-  else if(useAudio)
-    pc.addStream(new MediaStream([localStream.getAudioTracks()[0]]));
+    else if (useVideo)
+      pc.addStream(new MediaStream([localStream.getVideoTracks()[0]]));
+    else if(useAudio)
+      pc.addStream(new MediaStream([localStream.getAudioTracks()[0]]));
+  } else {
+    if (useAudio)
+      pc.addTrack(localStream.getAudioTracks()[0], localStream);
+    if (useVideo)
+      pc.addTrack(localStream.getVideoTracks()[0], localStream);
+  }
   if (useData)
       pc.createDataChannel("data channel");
 }
@@ -174,6 +187,8 @@ function hangup() {
 }
 
 function gotRemoteStream(e) {
+  if (video2.srcObject)
+      video2.srcObject = null;
   video2.srcObject = e.stream;
   trace('Received remote stream');
 }
