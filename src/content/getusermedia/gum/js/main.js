@@ -47,5 +47,8 @@ function errorMsg(msg, error) {
   }
 }
 
+if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+    alert("getUserMedia is not available");
+
 navigator.mediaDevices.getUserMedia(constraints).
     then(handleSuccess).catch(handleError);
