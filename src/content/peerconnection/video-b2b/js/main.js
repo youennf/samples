@@ -28,12 +28,16 @@ var pc;
 var localStream;
 var isCalling = false;
 
+var roomName = window.location.search ? window.location.search : "defaultRoom";
 var socket = io('/');
+
 socket.on('connect', function () {
     console.log('connected');
     socket.on('message', function (msg) {
         console.log(msg);
         var message = JSON.parse(msg);
+        if (message.room !== roomName)
+            return;
         if ((message.type === "callingCandidate" && !isCalling) || (message.type === "calledCandidate" && isCalling)) {
           trace('Remote ICE candidate: \n' + JSON.stringify(message.data));
           if (message.data) {
@@ -47,13 +51,19 @@ socket.on('connect', function () {
             return pc.createAnswer();
           }, onSetSessionDescriptionError).then(desc => {
             pc.setLocalDescription(desc);
-            socket.send(JSON.stringify({"type": "answer", data: desc}));
+            sendMessage({"type": "answer", data: desc});
           }, onCreateSessionDescriptionError);
         }
         else if (message.type === "answer")
             pc.setRemoteDescription(message.data).then(function() { }, onSetSessionDescriptionError);
      });
 });
+
+function sendMessage(message)
+{
+    message.room = roomName;
+     socket.send(JSON.stringify(message));
+}
 
 function onCreateSessionDescriptionError(error) {
   trace('Failed to create session description: ' + error.toString());
@@ -157,7 +167,7 @@ function call() {
   addMediaData();
   pc.createOffer().then((desc) => {
     pc.setLocalDescription(desc).then(() => {
-      socket.send(JSON.stringify({"type": "offer", data: desc}));
+      sendMessage({"type": "offer", data: desc});
     }, onSetSessionDescriptionError);
   },onCreateSessionDescriptionError);
 }
@@ -180,7 +190,7 @@ function gotRemoteStream(e) {
 
 function iceCallback(event) {
   trace('Local ICE candidate: \n' + JSON.stringify(event.candidate));
-  socket.send(JSON.stringify({ "type": (isCalling ? "callingCandidate" : "calledCandidate"), data: event.candidate }));
+  sendMessage({ "type": (isCalling ? "callingCandidate" : "calledCandidate"), data: event.candidate });
 }
 
 function onAddIceCandidateSuccess() {
