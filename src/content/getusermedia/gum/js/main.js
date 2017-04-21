@@ -14,18 +14,23 @@ var video = document.querySelector('video');
 // Put variables in global scope to make them available to the browser console.
 var constraints = window.constraints = {
   audio: true,
-  video: { width: 640, height: 480 }
+  video: true
 };
 
 function handleSuccess(stream) {
-  var videoTracks = stream.getVideoTracks();
+  var videoTrack = stream.getVideoTracks()[0];
+  if (videoTrack.getSettings)
+    alert(JSON.stringify(videoTrack.getSettings()));
   console.log('Got stream with constraints:', constraints);
-  console.log('Using video device: ' + videoTracks[0].label);
+  console.log('Using video device: ' + videoTrack.label);
   stream.oninactive = function() {
     console.log('Stream inactive');
   };
   window.stream = stream; // make variable available to browser console
   video.srcObject = stream;
+  video.play().then(() => {
+      alert("size:" + video.videoWidth + ", " + video.videoHeight);
+  })
 }
 
 function handleError(error) {
