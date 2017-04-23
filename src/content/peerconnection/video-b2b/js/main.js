@@ -24,6 +24,8 @@ dataButton.onclick = toggleData;
 audioButton.onclick = toggleAudio;
 videoButton.onclick = toggleVideo;
 
+var videoConstraints = {width: 640, height: 480, facingMode: "user"};
+
 var pc;
 var localStream;
 var isCalling = false;
@@ -77,7 +79,7 @@ pc.onaddstream = gotRemoteStream;
 function capture()
 {
   trace('Requesting local stream');
-  navigator.mediaDevices.getUserMedia({ audio: true, video: {width: 640, height: 480} }).then(gotStream).catch(function(e) {
+  navigator.mediaDevices.getUserMedia({ audio: true, video: videoConstraints).then(gotStream).catch(function(e) {
     alert('getUserMedia() error: ' + e);
   });
 }
@@ -88,6 +90,14 @@ function gotStream(stream) {
   localStream = stream;
 
   video1.srcObject = localStream;
+  if (!useVideo || pc.connectionState !== "connected" || pc.getSenders === undefined)
+      return;
+
+  for (var sender of pc.getSenders()) {
+      if (sender.track.kind === "video")
+        sender.replaceTrack(localStream.getVideoTracks()[0]);
+  }
+
 }
 
 function updateState()
@@ -138,6 +148,14 @@ function toggleVideo()
 {
     useVideo = !useVideo;
     videoButton.innerHTML = useVideo ? "Video" : "No video";
+}
+
+function localVideoClick()
+{
+    if (!video1.srcObject)
+        return;
+    videoConstraints.facingMode = videoConstraints.facingMode === "user" ? "environment" : "user";
+    capture();
 }
 
 function addMediaData()
