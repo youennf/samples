@@ -24,7 +24,8 @@
   },
   "dependencies": {
     "express": "^4.14.1",
-    "socket.io": "*"
+    "socket.io": "*",
+    "twilio": "*"
   },
   "devDependencies": {
     "eslint-config-webrtc": "^1.0.0",

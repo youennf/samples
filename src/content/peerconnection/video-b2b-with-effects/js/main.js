@@ -45,12 +45,19 @@ var roomName = window.location.search ? window.location.search : "defaultRoomWit
 var socket = io('/');
 
 var canvasVideo = document.createElement("video");
+var twilioToken;
 
 socket.on('connect', function () {
     console.log('connected');
     socket.on('message', function (msg) {
         console.log(msg);
         var message = JSON.parse(msg);
+
+        if (message.type === "twilio") {
+            twilioToken = message.data;
+            setupPeerConnection();
+            return;
+        }
         if (message.room !== roomName)
             return;
         if ((message.type === "callingCandidate" && !isCalling) || (message.type === "calledCandidate" && isCalling)) {
@@ -76,11 +83,6 @@ function sendMessage(message)
 function onCreateSessionDescriptionError(error) {
   trace('Failed to create session description: ' + error.toString());
 }
-
-trace('Created peer connection object pc');
-pc = new RTCPeerConnection();
-pc.onicecandidate = iceCallback;
-pc.onaddstream = gotRemoteStream;
 
 function capture()
 {
@@ -121,9 +123,21 @@ function updateState()
         stateDiv.innerHTML +=  "/" + pc.connectionState;
 }
 
-
 var reachedConnected = false;
-pc.oniceconnectionstatechange = () => {
+function setupPeerConnection()
+{
+  if (!!pc)
+      return;
+
+  trace('Created peer connection object pc');
+  var iceServers = twilioToken.ice_servers;
+  for (var server of iceServers)
+      server.urls = [server.url]
+  pc = new RTCPeerConnection({iceTransportPolicy: 'all', iceServers: iceServers});
+  pc.onicecandidate = iceCallback;
+  pc.onaddstream = gotRemoteStream;
+
+  pc.oniceconnectionstatechange = () => {
     updateState();
     if (pc.iceConnectionState == "closed") {
         remoteVideo.removeAttribute("class");
@@ -135,10 +149,11 @@ pc.oniceconnectionstatechange = () => {
         reachedConnected = false;
     var isConnected = pc.iceConnectionState == "connected" || (pc.iceConnectionState == "completed" && reachedConnected);
     remoteVideo.setAttribute("class", isConnected ? "connected" : "connecting");
-}
+  }
 
-pc.onconnectionstatechange = () => {
+  pc.onconnectionstatechange = () => {
     updateState();
+  }
 }
 
 var useData = true;
