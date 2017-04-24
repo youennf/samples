@@ -269,9 +269,14 @@ function switchRelay()
 
 function switchCamera()
 {
-    if (!canvasVideo.srcObject)
-        return;
+    // Temporary workaround
+    localVideo.play();
+    remoteVideo.play();
+
     videoConstraints.facingMode = videoConstraints.facingMode === "user" ? "environment" : "user";
+
+    if (!localVideo.srcObject)
+        return;
     capture();
     printSetup();
 }
