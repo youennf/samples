@@ -36,7 +36,7 @@ refreshTokenButton.onclick = refreshToken;
 
 var videoConstraints = {width: 640, height: 480, facingMode: "user"};
 var canvas = fx.canvas();
-document.getElementById("localVideo").appendChild(canvas);
+document.getElementById("localVideoWithEffects").appendChild(canvas);
 
 //canvas.width = 640;
 //canvas.height = 480;
@@ -98,17 +98,18 @@ function capture()
   });
 }
 
+var localVideoTrack;
+var canvasVideoTrack;
 function gotStream(stream) {
   callButton.disabled = false;
   trace('Received local stream');
   localStream = stream;
 
-  canvasVideo.srcObject = new MediaStream([localStream.getVideoTracks()[0]]);
-  canvasVideo.play();
-  videoToCanvas();
+  localVideo.srcObject = localStream;
+  localVideoTrack = localStream.getVideoTracks()[0];
 }
 
-var drawCanvas = true;
+var drawCanvas = false;
 var hexagonSize = 1;
 function videoToCanvas()
 {
@@ -191,6 +192,8 @@ function toggleDiscreetMode()
 {
     console.log("toggleDiscreetMode")
     useDiscreetMode = !useDiscreetMode;
+    if (useDiscreetMode)
+        startUsingDiscreetMode();
     updateHexagonSize();
     printSetup();
 }
@@ -202,11 +205,53 @@ function updateHexagonSize()
             return;
         hexagonSize++;
     } else {
-        if (hexagonSize <= 1)
+        if (hexagonSize <= 1) {
+            stopUsingDiscreetMode();
             return;
+        }
         hexagonSize--;
     }
     setTimeout(updateHexagonSize, 100);
+}
+
+function stopUsingDiscreetMode()
+{
+    localVideo.srcObject = localStream;
+    if (reachedConnected && pc.getSenders) {
+        for(var sender of pc.getSenders()) {
+            if (sender.track.kind === "video") {
+                console.log("replacing track to localVideoTrack");
+                sender.replaceTrack(localVideoTrack);
+                drawCanvas = false;
+                return;
+            }
+        }
+    }
+}
+
+function startUsingDiscreetMode()
+{
+  if (!canvasVideoTrack) {
+    canvasVideo.srcObject = new MediaStream([localVideoTrack]);
+    canvasVideo.play();
+    canvasVideoTrack = canvas.captureStream().getVideoTracks()[0];
+  }
+
+  if (!drawCanvas) {
+      drawCanvas = true;
+      videoToCanvas();
+  }
+
+  localVideo.srcObject = new MediaStream([canvasVideoTrack]);
+  if (reachedConnected && pc.getSenders) {
+        for(var sender of pc.getSenders()) {
+            if (sender.track.kind === "video") {
+                console.log("replacing track to canvasVideoTrack");
+                sender.replaceTrack(canvasVideoTrack);
+                return;
+            }
+        }
+    }
 }
 
 function printSetup()
@@ -235,13 +280,13 @@ function addMediaData()
 {
   if (useAudio && useVideo) {
     var audioTrack = localStream.getAudioTracks()[0];
-    var videoTrack = canvas.captureStream().getVideoTracks()[0];
+    var videoTrack = useDiscreetMode ? canvasVideoTrack : localVideoTrack;
     console.log(audioTrack);
     console.log(videoTrack);
     pc.addStream(new MediaStream([videoTrack]));
   }
   else if (useVideo)
-    pc.addStream(new MediaStream([canvas.captureStream()]));
+    pc.addStream(new MediaStream([useDiscreetMode ? canvasVideoTrack : localVideoTrack]));
   else if(useAudio)
     pc.addStream(new MediaStream([localStream.getAudioTracks()[0]]));
   if (useData)
@@ -294,11 +339,12 @@ function answer(offer)
   if (!useDiscreetMode) {
     useDiscreetMode = true;
     hexagonSize = 30;
-    toggleDiscreetMode();
+    startUsingDiscreetMode();
   }
   remoteVideo.setAttribute("class", "connecting");
   pc.setRemoteDescription(offer).then(() => {
     addMediaData();
+    toggleDiscreetMode();
     return pc.createAnswer();
   }, onSetSessionDescriptionError).then(desc => {
     pc.setLocalDescription(desc);

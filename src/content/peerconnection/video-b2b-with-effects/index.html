@@ -44,7 +44,7 @@
         <video id="remoteVideo" autoplay controls playsInline onclick="remoteVideoClick()" class="remoteVideoInitial"></video>
       </div>
       <div>
-        <div id="localVideo" onclick="localVideoClick()" class="localVideoInitial"></div>
+        <video id="localVideo" autoplay controls playsInline onclick="localVideoClick()" class="localVideoInitial"></video>
       </div>
     </div>
     <br></br>
@@ -65,6 +65,7 @@
     </div>
     <div id="state"></div>
     <div id="setupLog"></div>
+    <div id="localVideoWithEffects" style="display: none"></div>
   </div>
 <script src="/socket.io/socket.io.js"></script>
 
