@@ -19,17 +19,20 @@ var stateDiv = document.querySelector('div#state');
 hangupButton.disabled = true;
 callButton.onclick = call;
 hangupButton.onclick = hangup;
-dataButton.onclick = toggleData;
+//dataButton.onclick = toggleData;
 audioButton.onclick = toggleAudio;
 videoButton.onclick = toggleVideo;
-var discreteModeButton = document.querySelector('button#discreteModeButton');
-discreteModeButton.onclick = toggleDiscreteMode;
+var discreetModeButton = document.querySelector('button#discreetModeButton');
+discreetModeButton.onclick = toggleDiscreetMode;
 
 var switchRelayButton = document.querySelector('button#switchRelayButton');
 switchRelayButton.onclick = switchRelay;
 
 var switchCameraButton = document.querySelector('button#switchCameraButton');
 switchCameraButton.onclick = switchCamera;
+
+var refreshTokenButton = document.querySelector('button#refreshTokenButton');
+refreshTokenButton.onclick = refreshToken;
 
 var videoConstraints = {width: 640, height: 480, facingMode: "user"};
 var canvas = fx.canvas();
@@ -183,17 +186,18 @@ function toggleVideo()
     videoButton.innerHTML = useVideo ? "Video" : "No video";
 }
 
-var useDiscreteMode = false;
-function toggleDiscreteMode()
+var useDiscreetMode = false;
+function toggleDiscreetMode()
 {
-    console.log("toggleDiscreteMode")
-    useDiscreteMode = !useDiscreteMode;
+    console.log("toggleDiscreetMode")
+    useDiscreetMode = !useDiscreetMode;
     updateHexagonSize();
+    printSetup();
 }
 
 function updateHexagonSize()
 {
-    if (useDiscreteMode) {
+    if (useDiscreetMode) {
         if (hexagonSize >= 30)
             return;
         hexagonSize++;
@@ -207,7 +211,9 @@ function updateHexagonSize()
 
 function printSetup()
 {
-    setupLog.innerHTML = (useOnlyRelay ? "only relay" : "relay + others") + " / camera: " + videoConstraints.facingMode;
+    setupLog.innerHTML = (useOnlyRelay ? "only relay" : "relay + others");
+    setupLog.innerHTML += " / camera: " + videoConstraints.facingMode;
+    setupLog.innerHTML += " / discreet: " + (useDiscreetMode ? "yes" : "no");
 }
 
 function switchRelay()
@@ -285,10 +291,10 @@ function answer(offer)
   localVideo.className = "smallLocalVideo";
   remoteVideo.className = "bigRemoteVideo";
   remoteVideo.style.visibility = "visible";
-  if (!useDiscreteMode) {
-    useDiscreteMode = true;
+  if (!useDiscreetMode) {
+    useDiscreetMode = true;
     hexagonSize = 30;
-    toggleDiscreteMode();
+    toggleDiscreetMode();
   }
   remoteVideo.setAttribute("class", "connecting");
   pc.setRemoteDescription(offer).then(() => {
@@ -331,6 +337,17 @@ function onAddIceCandidateError(error) {
 
 function onSetSessionDescriptionError(error) {
   trace('Failed to set session description: ' + error.toString());
+}
+
+function refreshToken()
+{
+    console.log("Asking for new token");
+    fetch("/server/refreshToken").then((response) => {
+        return response.json();
+    }).then((data) => {
+        twilioToken = data;
+        console.log("Getting token " + JSON.stringify(twilioToken));
+    });
 }
 
 capture();

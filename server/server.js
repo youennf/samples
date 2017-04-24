@@ -19,6 +19,13 @@ twilio.tokens.create({ }, function(err, t) {
     token = t;
 });
 
+app.all('/server/refreshToken', (req, res, next) => {
+    twilio.tokens.create({ }, function(err, t) {
+        token = t;
+        res.status(200).send(JSON.stringify(token));
+    });
+});
+
 app.all('/server/*', function (req,res, next) {
    res.status(404).send();
 });
