@@ -107,6 +107,9 @@ function gotStream(stream) {
 
   localVideo.srcObject = localStream;
   localVideoTrack = localStream.getVideoTracks()[0];
+
+  if (reachedConnected)
+    updateVideoTrackSender();
 }
 
 var drawCanvas = false;
@@ -218,15 +221,21 @@ function stopUsingDiscreetMode()
 {
     localVideo.srcObject = localStream;
     if (reachedConnected && pc.getSenders) {
-        for(var sender of pc.getSenders()) {
-            if (sender.track.kind === "video") {
-                console.log("replacing track to localVideoTrack");
-                sender.replaceTrack(localVideoTrack);
-                drawCanvas = false;
-                return;
-            }
+        if (updateVideoTrackSender())
+            drawCanvas = false;
+    }
+}
+
+function updateVideoTrackSender()
+{
+    for(var sender of pc.getSenders()) {
+        if (sender.track.kind === "video") {
+            console.log("replacing track to localVideoTrack");
+            sender.replaceTrack(localVideoTrack);
+            return true;
         }
     }
+    return false;
 }
 
 function startUsingDiscreetMode()
