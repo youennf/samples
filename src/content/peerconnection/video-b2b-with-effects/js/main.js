@@ -25,6 +25,9 @@ videoButton.onclick = toggleVideo;
 var discreteModeButton = document.querySelector('button#discreteModeButton');
 discreteModeButton.onclick = toggleDiscreteMode;
 
+var switchRelayButton = document.querySelector('button#switchRelayButton');
+switchRelayButton.onclick = switchRelay;
+
 var switchCameraButton = document.querySelector('button#switchCameraButton');
 switchCameraButton.onclick = switchCamera;
 
@@ -102,6 +105,7 @@ function gotStream(stream) {
   videoToCanvas();
 }
 
+var drawCanvas = true;
 var hexagonSize = 1;
 function videoToCanvas()
 {
@@ -111,7 +115,8 @@ function videoToCanvas()
     } catch(e) {
         console.log(e);
     }
-    window.requestAnimationFrame(videoToCanvas);
+    if (drawCanvas)
+        window.requestAnimationFrame(videoToCanvas);
 }
 
 function updateState()
@@ -123,6 +128,7 @@ function updateState()
         stateDiv.innerHTML +=  "/" + pc.connectionState;
 }
 
+var useOnlyRelay = false;
 var reachedConnected = false;
 function setupPeerConnection()
 {
@@ -132,8 +138,8 @@ function setupPeerConnection()
   trace('Created peer connection object pc');
   var iceServers = twilioToken.ice_servers;
   for (var server of iceServers)
-      server.urls = [server.url]
-  pc = new RTCPeerConnection({iceTransportPolicy: 'all', iceServers: iceServers});
+      server.urls = [server.url];
+  pc = new RTCPeerConnection({iceTransportPolicy: (useOnlyRelay ? 'relay' : 'all'), iceServers: iceServers});
   pc.onicecandidate = iceCallback;
   pc.onaddstream = gotRemoteStream;
 
@@ -156,7 +162,7 @@ function setupPeerConnection()
   }
 }
 
-var useData = true;
+var useData = false;
 function toggleData()
 {
     useData = !useData;
@@ -199,18 +205,35 @@ function updateHexagonSize()
     setTimeout(updateHexagonSize, 100);
 }
 
+function printSetup()
+{
+    setupLog.innerHTML = (useOnlyRelay ? "only relay" : "relay + others") + " / camera: " + videoConstraints.facingMode;
+}
+
+function switchRelay()
+{
+    useOnlyRelay = !useOnlyRelay;
+    printSetup();
+}
+
 function switchCamera()
 {
     if (!canvasVideo.srcObject)
         return;
     videoConstraints.facingMode = videoConstraints.facingMode === "user" ? "environment" : "user";
     capture();
+    printSetup();
 }
 
 function addMediaData()
 {
-  if (useAudio && useVideo)
-      pc.addStream(new MediaStream([localStream.getAudioTracks()[0], canvas.captureStream().getVideoTracks()[0]]));
+  if (useAudio && useVideo) {
+    var audioTrack = localStream.getAudioTracks()[0];
+    var videoTrack = canvas.captureStream().getVideoTracks()[0];
+    console.log(audioTrack);
+    console.log(videoTrack);
+    pc.addStream(new MediaStream([videoTrack]));
+  }
   else if (useVideo)
     pc.addStream(new MediaStream([canvas.captureStream()]));
   else if(useAudio)
@@ -232,6 +255,8 @@ function remoteVideoClick()
 }
 
 function call() {
+  printSetup();
+
   localVideo.className = "smallLocalVideo";
   remoteVideo.className = "bigRemoteVideo";
 
