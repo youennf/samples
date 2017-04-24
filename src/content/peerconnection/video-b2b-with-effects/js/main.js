@@ -214,7 +214,7 @@ function updateHexagonSize()
         }
         hexagonSize--;
     }
-    setTimeout(updateHexagonSize, 100);
+    setTimeout(updateHexagonSize, 300);
 }
 
 function stopUsingDiscreetMode()
