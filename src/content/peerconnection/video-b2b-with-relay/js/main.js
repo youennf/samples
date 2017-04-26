@@ -103,6 +103,7 @@ function gotStream(stream) {
   trace('Received local stream');
   localStream = stream;
 
+  trace(localStream.getTracks());
   localVideo.srcObject = localStream;
   localVideoTrack = localStream.getVideoTracks()[0];
 
@@ -232,7 +233,7 @@ function addMediaData()
     var videoTrack = localVideoTrack;
     console.log(audioTrack);
     console.log(videoTrack);
-    pc.addStream(new MediaStream([videoTrack]));
+    pc.addStream(new MediaStream([audioTrack, videoTrack]));
   }
   else if (useVideo)
     pc.addStream(new MediaStream([localVideoTrack]));

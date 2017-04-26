@@ -304,7 +304,7 @@ function addMediaData()
     var videoTrack = useDiscreetMode ? canvasVideoTrack : localVideoTrack;
     console.log(audioTrack);
     console.log(videoTrack);
-    pc.addStream(new MediaStream([videoTrack]));
+    pc.addStream(new MediaStream([audioTrack, videoTrack]));
   }
   else if (useVideo)
     pc.addStream(new MediaStream([useDiscreetMode ? canvasVideoTrack : localVideoTrack]));
