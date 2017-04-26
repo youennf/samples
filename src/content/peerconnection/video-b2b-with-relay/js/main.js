@@ -26,8 +26,8 @@ videoButton.onclick = toggleVideo;
 var switchRelayButton = document.querySelector('button#switchRelayButton');
 switchRelayButton.onclick = switchRelay;
 
-var switchCameraButton = document.querySelector('button#switchCameraButton');
-switchCameraButton.onclick = switchCamera;
+//var switchCameraButton = document.querySelector('button#switchCameraButton');
+//switchCameraButton.onclick = switchCamera;
 
 var refreshTokenButton = document.querySelector('button#refreshTokenButton');
 refreshTokenButton.onclick = refreshToken;
@@ -96,8 +96,6 @@ function capture()
   });
 }
 
-var localVideoTrack;
-var canvasVideoTrack;
 function gotStream(stream) {
   callButton.disabled = false;
   trace('Received local stream');
@@ -105,45 +103,20 @@ function gotStream(stream) {
 
   trace(localStream.getTracks());
   localVideo.srcObject = localStream;
-  localVideoTrack = localStream.getVideoTracks()[0];
 
-  if (reachedConnected)
-    updateVideoTrackSender();
-}
-
-function updateVideoTrackSender()
-{
-    for(var sender of pc.getSenders()) {
-        if (sender.track.kind === "video") {
-            console.log("replacing track to localVideoTrack");
-            sender.replaceTrack(localVideoTrack);
-            return true;
-        }
-    }
-    return false;
-}
-
-var drawCanvas = false;
-var hexagonSize = 1;
-function videoToCanvas()
-{
-    try {
-        var texture = canvas.texture(canvasVideo);
-        canvas.draw(texture).hexagonalPixelate(320, 239.5, hexagonSize).update();
-    } catch(e) {
-        console.log(e);
-    }
-    if (drawCanvas)
-        window.requestAnimationFrame(videoToCanvas);
+  printSetup();
+  updateState();
 }
 
 function updateState()
 {
     if (stateDiv.innerHTML)
         stateDiv.innerHTML += ", ";
-    stateDiv.innerHTML += pc.iceConnectionState;
-    if (pc.connectionState)
-        stateDiv.innerHTML +=  "/" + pc.connectionState;
+    if (!!pc) {
+      stateDiv.innerHTML += pc.iceConnectionState;
+      if (pc.connectionState)
+          stateDiv.innerHTML +=  "/" + pc.connectionState;
+   }
 }
 
 var useOnlyRelay = false;
@@ -210,6 +183,20 @@ function printSetup()
 {
     setupLog.innerHTML = (useOnlyRelay ? "only relay" : "relay + others");
     setupLog.innerHTML += " / camera: " + videoConstraints.facingMode;
+
+    if (localStream) {
+        if (localStream.getAudioTracks()[0])
+            setupLog.innerHTML +=  " / local audio";
+        if (localStream.getVideoTracks()[0])
+            setupLog.innerHTML +=  " / local video";
+    }
+
+    if (remoteStream) {
+        if (remoteStream.getAudioTracks()[0])
+            setupLog.innerHTML +=  " / remote audio";
+        if (remoteStream.getVideoTracks()[0])
+            setupLog.innerHTML +=  " / remote video";
+    }
 }
 
 function switchRelay()
@@ -228,19 +215,7 @@ function switchCamera()
 
 function addMediaData()
 {
-  if (useAudio && useVideo) {
-    var audioTrack = localStream.getAudioTracks()[0];
-    var videoTrack = localVideoTrack;
-    console.log(audioTrack);
-    console.log(videoTrack);
-    pc.addStream(localStream);
-  }
-  else if (useVideo)
-    pc.addStream(new MediaStream([localVideoTrack]));
-  else if(useAudio)
-    pc.addStream(new MediaStream([localStream.getAudioTracks()[0]]));
-  if (useData)
-      pc.createDataChannel("data channel");
+  pc.addStream(localStream);
 }
 
 function localVideoClick()
@@ -312,8 +287,11 @@ function hangup() {
   setTimeout(() => window.location.reload(), 2000);
 }
 
+var remoteStream;
 function gotRemoteStream(e) {
-  remoteVideo.srcObject = e.stream;
+  remoteStream = e.stream;
+  printSetup();
+  remoteVideo.srcObject = remoteStream;
   trace('Received remote stream');
 }
 
