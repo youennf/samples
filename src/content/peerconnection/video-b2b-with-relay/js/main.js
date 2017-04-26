@@ -233,7 +233,7 @@ function addMediaData()
     var videoTrack = localVideoTrack;
     console.log(audioTrack);
     console.log(videoTrack);
-    pc.addStream(new MediaStream([audioTrack, videoTrack]));
+    pc.addStream(localStream);
   }
   else if (useVideo)
     pc.addStream(new MediaStream([localVideoTrack]));
