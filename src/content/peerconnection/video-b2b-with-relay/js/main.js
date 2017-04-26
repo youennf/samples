@@ -45,8 +45,10 @@ var pc;
 var localStream;
 var isCalling = false;
 
-var roomName = window.location.search ? window.location.search : "defaultRoomWithRelay";
+var roomName = window.location.search ? window.location.search.substring(1) : "defaultRoomWithRelay";
 var socket = io('/');
+
+chatRoom.innerHTML = "chat room: " + roomName;
 
 var canvasVideo = document.createElement("video");
 var twilioToken;
