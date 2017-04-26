@@ -105,6 +105,21 @@ function gotStream(stream) {
 
   localVideo.srcObject = localStream;
   localVideoTrack = localStream.getVideoTracks()[0];
+
+  if (reachedConnected)
+    updateVideoTrackSender();
+}
+
+function updateVideoTrackSender()
+{
+    for(var sender of pc.getSenders()) {
+        if (sender.track.kind === "video") {
+            console.log("replacing track to localVideoTrack");
+            sender.replaceTrack(localVideoTrack);
+            return true;
+        }
+    }
+    return false;
 }
 
 var drawCanvas = false;
@@ -204,8 +219,7 @@ function switchRelay()
 
 function switchCamera()
 {
-    if (!canvasVideo.srcObject)
-        return;
+    trace("switchCamera")
     videoConstraints.facingMode = videoConstraints.facingMode === "user" ? "environment" : "user";
     capture();
     printSetup();
