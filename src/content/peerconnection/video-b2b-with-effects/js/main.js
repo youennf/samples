@@ -117,8 +117,10 @@ var hexagonSize = 1;
 function videoToCanvas()
 {
     try {
-        var texture = canvas.texture(canvasVideo);
-        canvas.draw(texture).hexagonalPixelate(320, 239.5, hexagonSize).update();
+        //if (canvasVideoStartedPlaying) {
+            var texture = canvas.texture(canvasVideo);
+            canvas.draw(texture).hexagonalPixelate(320, 239.5, hexagonSize).update();
+        //}
     } catch(e) {
         console.log(e);
     }
@@ -154,12 +156,17 @@ function setupPeerConnection()
     updateState();
     if (pc.iceConnectionState == "closed") {
         remoteVideo.removeAttribute("class");
+        window.location.reload();
         return;
     }
     if (pc.iceConnectionState == "connected")
         reachedConnected = true;
-    else if (pc.iceConnectionState == "failed" || pc.iceConnectionState == "disconnected")
+    else if (pc.iceConnectionState == "failed")
         reachedConnected = false;
+    else if (pc.iceConnectionState == "disconnected") {
+        reachedConnected = false;
+        setTimeout(() => window.location.reload(), 2000);
+     }
     var isConnected = pc.iceConnectionState == "connected" || (pc.iceConnectionState == "completed" && reachedConnected);
     remoteVideo.setAttribute("class", isConnected ? "connected" : "connecting");
   }
@@ -340,6 +347,7 @@ function call() {
   addMediaData();
   pc.createOffer().then((desc) => {
     pc.setLocalDescription(desc).then(() => {
+//      desc.sdp = maybePreferCodec(desc.sdp, 'video', 'send', 'H264/90000');
       sendMessage({"type": "offer", data: desc});
     }, onSetSessionDescriptionError);
   },onCreateSessionDescriptionError);
@@ -347,6 +355,9 @@ function call() {
 
 function answer(offer)
 {
+  hangupButton.disabled = false;
+  callButton.disabled = true;
+
   localVideo.className = "smallLocalVideo";
   remoteVideo.className = "bigRemoteVideo";
   remoteVideo.style.visibility = "visible";
@@ -375,6 +386,8 @@ function hangup() {
   pc = null;
   hangupButton.disabled = true;
   callButton.disabled = false;
+
+  setTimeout(() => window.location.reload(), 2000);
 }
 
 function gotRemoteStream(e) {
@@ -411,3 +424,84 @@ function refreshToken()
 }
 
 capture();
+
+
+// Copied from AppRTC's sdputils.js:
+
+// Sets |codec| as the default |type| codec if it's present.
+// The format of |codec| is 'NAME/RATE', e.g. 'opus/48000'.
+function maybePreferCodec(sdp, type, dir, codec) {
+  var str = type + ' ' + dir + ' codec';
+  if (codec === '') {
+    trace('No preference on ' + str + '.');
+    return sdp;
+  }
+
+  trace('Prefer ' + str + ': ' + codec);
+
+  var sdpLines = sdp.split('\r\n');
+
+  // Search for m line.
+  var mLineIndex = findLine(sdpLines, 'm=', type);
+  if (mLineIndex === null) {
+    return sdp;
+  }
+
+  // If the codec is available, set it as the default in m line.
+  var codecIndex = findLine(sdpLines, 'a=rtpmap', codec);
+  console.log('codecIndex', codecIndex);
+  if (codecIndex) {
+    var payload = getCodecPayloadType(sdpLines[codecIndex]);
+    if (payload) {
+      sdpLines[mLineIndex] = setDefaultCodec(sdpLines[mLineIndex], payload);
+    }
+  }
+
+  sdp = sdpLines.join('\r\n');
+  return sdp;
+}
+
+// Find the line in sdpLines that starts with |prefix|, and, if specified,
+// contains |substr| (case-insensitive search).
+function findLine(sdpLines, prefix, substr) {
+  return findLineInRange(sdpLines, 0, -1, prefix, substr);
+}
+
+// Find the line in sdpLines[startLine...endLine - 1] that starts with |prefix|
+// and, if specified, contains |substr| (case-insensitive search).
+function findLineInRange(sdpLines, startLine, endLine, prefix, substr) {
+  var realEndLine = endLine !== -1 ? endLine : sdpLines.length;
+  for (var i = startLine; i < realEndLine; ++i) {
+    if (sdpLines[i].indexOf(prefix) === 0) {
+      if (!substr ||
+          sdpLines[i].toLowerCase().indexOf(substr.toLowerCase()) !== -1) {
+        return i;
+      }
+    }
+  }
+  return null;
+}
+
+// Gets the codec payload type from an a=rtpmap:X line.
+function getCodecPayloadType(sdpLine) {
+  var pattern = new RegExp('a=rtpmap:(\\d+) \\w+\\/\\d+');
+  var result = sdpLine.match(pattern);
+  return (result && result.length === 2) ? result[1] : null;
+}
+
+// Returns a new m= line with the specified codec as the first one.
+function setDefaultCodec(mLine, payload) {
+  var elements = mLine.split(' ');
+
+  // Just copy the first three parameters; codec order starts on fourth.
+  var newLine = elements.slice(0, 3);
+
+  // Put target payload first and copy in the rest.
+  newLine.push(payload);
+  for (var i = 3; i < elements.length; i++) {
+    if (elements[i] !== payload) {
+      newLine.push(elements[i]);
+    }
+  }
+  return newLine.join(' ');
+}

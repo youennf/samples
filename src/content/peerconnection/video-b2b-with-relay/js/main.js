@@ -261,7 +261,7 @@ function call() {
   addMediaData();
   pc.createOffer().then((desc) => {
     pc.setLocalDescription(desc).then(() => {
-      desc.sdp = maybePreferCodec(desc.sdp, 'video', 'send', 'H264/90000');
+      //desc.sdp = maybePreferCodec(desc.sdp, 'video', 'send', 'H264/90000');
       sendMessage({"type": "offer", data: desc});
     }, onSetSessionDescriptionError);
   },onCreateSessionDescriptionError);
