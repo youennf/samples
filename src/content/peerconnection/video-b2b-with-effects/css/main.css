@@ -38,6 +38,7 @@ audio {
 
 #localVideo {
     transition: width 2s;
+    transform: rotateY(180deg);
 }
 
 #remoteVideo {

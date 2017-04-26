@@ -41,20 +41,20 @@
     <br></br>
     <div id="video">
       <div>
-        <video id="remoteVideo" autoplay controls playsInline onclick="remoteVideoClick()" class="remoteVideoInitial"></video>
+        <video id="remoteVideo" autoplay controls playsInline onclick="remoteVideoClick()" ontouchend="remoteVideoClick()" class="remoteVideoInitial"></video>
       </div>
       <div>
-        <video id="localVideo" autoplay controls playsInline onclick="localVideoClick()" class="localVideoInitial"></video>
+        <video id="localVideo" autoplay controls playsInline onclick="localVideoClick()"  ontouchend="localVideoClick()" class="localVideoInitial"></video>
       </div>
     </div>
     <br></br>
     <div id="otherButtons">
       <button id="switchCameraButton">Camera</button>
-      <button id="switchRelayButton">Relay</button>
     </div>
     <br></br>
     <div id="otherButtons">
-      <button id="refreshTokenButton">Refresh</button>
+      <button id="refreshTokenButton">New token</button>
+      <button id="switchRelayButton">Relay</button>
     </div>
     <br></br>
     <div id="options">
