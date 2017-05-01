@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<!--
+ *  Copyright (c) 2015 The WebRTC project authors. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree.
+-->
+<html>
+<head>
+
+  <meta charset="utf-8">
+  <meta name="description" content="WebRTC code samples">
+  <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
+  <meta itemprop="description" content="Client-side WebRTC code samples">
+  <meta itemprop="image" content="../../../images/webrtc-icon-192x192.png">
+  <meta itemprop="name" content="WebRTC code samples">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta id="theme-color" name="theme-color" content="#ffffff">
+
+  <base target="_blank">
+
+  <title>Video Chat</title>
+
+  <link rel="icon" sizes="192x192" href="../../../images/webrtc-icon-192x192.png">
+  <link href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
+  <link href="//fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="../../../css/main.css" />
+  <link rel="stylesheet" href="css/main.css" />
+
+</head>
+
+<body>
+
+  <div id="container">
+
+    <div id="buttons">
+      <button id="callButton">Call</button>
+      <button id="hangupButton">Hang Up</button>
+      <div id="chatRoom">default chat room</div>
+    </div>
+    <br></br>
+    <div id="videos">
+      <div>
+        <video id="localVideo" autoplay muted playsInline onclick="localVideoClick()"  ontouchend="localVideoClick()" class="localVideoInitial" style="visibility:hidden"></video>
+      </div>
+    </div>
+    <br></br>
+    <!--div id="otherButtons">
+      <button id="switchCameraButton">Camera</button>
+    </div>
+    <br></br-->
+    <div id="otherButtons">
+      <button id="refreshTokenButton">New token</button>
+      <button id="switchRelayButton">Relay</button>
+    </div>
+    <br></br>
+    <div id="options">
+      <!--button id="dataToggle">No Data</button-->
+      <button id="audioToggle">Audio</button>
+      <button id="videoToggle">Video</button>
+    </div>
+    <div id="state"></div>
+    <div id="setupLog"></div>
+    <div id="localVideoWithEffects" style="display: none"></div>
+  </div>
+<script src="/socket.io/socket.io.js"></script>
+
+  <script src="js/glfx.js"></script>
+  <script src="../../../js/adapter.js"></script>
+  <script src="../../../js/common.js"></script>
+  <script src="js/main.js"></script>
+  <script src="../../../js/third_party/graph.js"></script>
+
+  <script src="../../../js/lib/ga.js"></script>
+</body>
+</html>
