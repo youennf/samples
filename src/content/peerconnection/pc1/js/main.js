@@ -73,8 +73,7 @@ function start() {
   startButton.disabled = true;
   navigator.mediaDevices.getUserMedia({
     audio: false,
-    video: { width: 640, height: 480 }
-  })
+    video: true})
   .then(gotStream)
   .catch(function(e) {
     alert('getUserMedia() error: ' + e);
@@ -86,7 +85,7 @@ function change()
     if (!localStream)
         return;
 
-    localStream.getVideoTracks()[0].applyConstraints({video: 320, height: 240}).then(() => console.log("resize ok", (error) => console.log(error)));
+    localStream.getVideoTracks()[0].applyConstraints({width: 320, height: 240}).then(() => console.log("resize ok", (error) => console.log(error)));
 }
 
 function call() {
