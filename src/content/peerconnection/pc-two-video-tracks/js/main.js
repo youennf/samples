@@ -73,7 +73,7 @@ function start() {
   trace('Requesting local stream');
   startButton.disabled = true;
   navigator.mediaDevices.getUserMedia({
-    audio: false,
+    audio: true,
     video: { width: 1280, height: 960 }
   })
   .then(gotStream)
@@ -115,7 +115,7 @@ function call() {
   pc2.onaddstream = gotRemoteStream;
   pc2.ontrack = gotRemoteTrack;
 
-  pc1.addStream(new MediaStream([localStream.getVideoTracks()[0], localCanvasStream.getVideoTracks()[0]]))
+  pc1.addStream(new MediaStream([localStream.getAudioTracks()[0], localStream.getAudioTracks()[0].clone(), localStream.getVideoTracks()[0], localCanvasStream.getVideoTracks()[0].clone()]))
   trace('Added local stream to pc1');
 
   trace('pc1 createOffer start');
@@ -170,19 +170,22 @@ function onSetSessionDescriptionError(error) {
 }
 
 function gotRemoteTrack(e) {
-  var firstTrack = e.track.id === localStream.getVideoTracks()[0].id;
-  var stream = new MediaStream([e.track]);
-  if (firstTrack)
-    remoteVideo.srcObject = stream;
-  else
-    remoteCanvasVideo.srcObject = stream;
-  firstTrack = !firstTrack;
-  trace('pc2 received remote track');
+//  var firstTrack = e.track.id === localStream.getVideoTracks()[0].id;
+//  var stream = new MediaStream([e.track]);
+//  if (firstTrack)
+//    remoteVideo.srcObject = stream;
+//  else
+//    remoteCanvasVideo.srcObject = stream;
+//  firstTrack = !firstTrack;
+//  trace('pc2 received remote track');
 }
 
 function gotRemoteStream(e) {
   //remoteVideo.srcObject = e.stream;
   trace('pc2 received remote stream');
+
+  remoteVideo.srcObject = new MediaStream([e.stream.getAudioTracks()[0], e.stream.getVideoTracks()[0]]);
+  remoteCanvasVideo.srcObject = new MediaStream([e.stream.getAudioTracks()[1], e.stream.getVideoTracks()[1]]);
 }
 
 function onCreateAnswerSuccess(desc) {
