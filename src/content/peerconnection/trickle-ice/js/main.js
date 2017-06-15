@@ -105,6 +105,7 @@ function start() {
   trace('Creating new PeerConnection with config=' + JSON.stringify(config) +
         ', constraints=' + JSON.stringify(pcConstraints));
   pc = new RTCPeerConnection(config, pcConstraints);
+  pc.createDataChannel("test");
   pc.onicecandidate = iceCallback;
   pc.createOffer(
     offerOptions
