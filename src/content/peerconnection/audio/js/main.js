@@ -266,7 +266,7 @@ function setDefaultCodec(mLine, payload) {
   }
   return newLine.join(' ');
 }
-
+/*
 // query getStats every second
 window.setInterval(function() {
   if (!window.pc1) {
@@ -303,3 +303,4 @@ window.setInterval(function() {
     lastResult = res;
   });
 }, 1000);
+*/
