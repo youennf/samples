@@ -72,7 +72,7 @@ function start() {
   trace('Requesting local stream');
   startButton.disabled = true;
   navigator.mediaDevices.getUserMedia({
-    audio: true,
+    audio: {echoCancellation: false},
     video: true})
   .then(gotStream)
   .catch(function(e) {
