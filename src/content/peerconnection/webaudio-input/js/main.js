@@ -67,12 +67,12 @@ function handleSuccess(stream) {
     console.log('Got one audio track:', audioTracks);
     var filteredStream = webAudio.applyFilter(stream);
     var servers = null;
-    pc1 = new webkitRTCPeerConnection(servers); // eslint-disable-line new-cap
+    pc1 = new RTCPeerConnection(servers); // eslint-disable-line new-cap
     console.log('Created local peer connection object pc1');
     pc1.onicecandidate = function(e) {
       onIceCandidate(pc1, e);
     };
-    pc2 = new webkitRTCPeerConnection(servers); // eslint-disable-line new-cap
+    pc2 = new RTCPeerConnection(servers); // eslint-disable-line new-cap
     console.log('Created remote peer connection object pc2');
     pc2.onicecandidate = function(e) {
       onIceCandidate(pc2, e);
