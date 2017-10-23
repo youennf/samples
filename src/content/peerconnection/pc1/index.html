@@ -39,16 +39,16 @@
 
     <h1><a href="//webrtc.github.io/samples/" title="WebRTC samples homepage">WebRTC samples</a> <span>Peer connection</span></h1>
 
-    <video id="localVideo" autoplay muted controls playsInline></video>
+    <video id="localVideo" autoplay muted playsInline></video>
     <br>
-    <video id="remoteVideo" autoplay controls playsInline></video>
+    <video id="remoteVideo" autoplay playsInline></video>
 
     <div>
       <button id="startButton">Start</button>
       <button id="callButton">Call</button>
-      <button id="changeButton">Change</button>
-      <button id="hangupButton">Hang Up</button>
+      <button id="reloadButton" onclick="history.go(0)">Reload</button>
     </div>
+    <p id="errorMessage"></p>
 
     <p>View the console to see logging. The <code>MediaStream</code> object <code>localStream</code>, and the <code>RTCPeerConnection</code> objects <code>pc1</code> and <code>pc2</code> are in global scope, so you can inspect them in the console as well.</p>
 

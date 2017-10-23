@@ -10,14 +10,9 @@
 
 var startButton = document.getElementById('startButton');
 var callButton = document.getElementById('callButton');
-var changeButton = document.getElementById('changeButton');
-var hangupButton = document.getElementById('hangupButton');
 callButton.disabled = true;
-hangupButton.disabled = true;
 startButton.onclick = start;
 callButton.onclick = call;
-changeButton.onclick = change;
-hangupButton.onclick = hangup;
 
 var startTime;
 var localVideo = document.getElementById('localVideo');
@@ -68,13 +63,21 @@ function gotStream(stream) {
   callButton.disabled = false;
 }
 
+function refusedStream(e) {
+    if (e.name === "NotAllowedError") {
+        errorMessage.innerHTML = "Access to the camera and microphone was not granted. Please click on the reload button to retry."
+        return;
+    }
+    alert('getUserMedia() error: ' + e);
+}
+
 function start() {
   trace('Requesting local stream');
   startButton.disabled = true;
   navigator.mediaDevices.getUserMedia({
     audio: true,
     video: true})
-  .then(gotStream)
+  .then(gotStream, refusedStream)
   .catch(function(e) {
     alert('getUserMedia() error: ' + e);
   });
@@ -90,7 +93,6 @@ function change()
 
 function call() {
   callButton.disabled = true;
-  hangupButton.disabled = false;
   trace('Starting call');
   startTime = window.performance.now();
   var videoTracks = localStream.getVideoTracks();

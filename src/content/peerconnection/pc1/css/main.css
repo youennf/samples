@@ -20,6 +20,10 @@ video {
   vertical-align: top;
 }
 
+#errorMessage {
+  color: red;
+}
+
 video#localVideo {
   transform: rotateY(180deg);
   margin: 0 20px 20px 0;
