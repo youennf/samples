@@ -18,13 +18,6 @@ var instantValueDisplay = document.querySelector('#instant .value');
 var slowValueDisplay = document.querySelector('#slow .value');
 var clipValueDisplay = document.querySelector('#clip .value');
 
-try {
-  window.AudioContext = window.AudioContext || window.webkitAudioContext;
-  window.audioContext = new AudioContext();
-} catch (e) {
-  alert('Web Audio API not supported.');
-}
-
 // Put variables in global scope to make them available to the browser console.
 var constraints = window.constraints = {
   audio: {echoCancellation: false},
@@ -32,6 +25,15 @@ var constraints = window.constraints = {
 };
 
 function handleSuccess(stream) {
+  try {
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (window.audioContext)
+      window.audioContext.close();
+    window.audioContext = new AudioContext();
+  } catch (e) {
+    alert('Web Audio API not supported.');
+  }
+
   // Put variables in global scope to make them available to the
   // browser console.
   window.stream = stream;
@@ -41,7 +43,7 @@ function handleSuccess(stream) {
       alert(e);
       return;
     }
-    setInterval(function() {
+    soundMeter.intervalID = setInterval(function() {
       instantMeter.value = instantValueDisplay.innerText =
           soundMeter.instant.toFixed(2);
       slowMeter.value = slowValueDisplay.innerText =
@@ -55,6 +57,16 @@ function handleSuccess(stream) {
 function handleError(error) {
   console.log('navigator.getUserMedia error: ', error);
 }
+
+retrying.onclick = function() {
+  if (window.stream)
+    stream.getAudioTracks()[0].stop();
+  if (window.soundMeter)
+    clearInterval(soundMeter.intervalID);
+  navigator.mediaDevices.getUserMedia(constraints).
+    then(handleSuccess).catch(handleError);
+};
+
 
 navigator.mediaDevices.getUserMedia(constraints).
     then(handleSuccess).catch(handleError);
