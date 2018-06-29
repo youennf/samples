@@ -196,9 +196,13 @@ async function loopVideoSources()
 {
     isUser = !isUser;
     const mode = isUser ? "user" : "environment";
-    var stream = await navigator.mediaDevices.getUserMedia({video: { facingMode: mode } });
-    localVideo.srcObject = stream;
-    videoRtpSender.replaceTrack(stream.getVideoTracks()[0]);
+    try {
+        var stream = await navigator.mediaDevices.getUserMedia({video: { facingMode: mode } });
+        localVideo.srcObject = stream;
+        videoRtpSender.replaceTrack(stream.getVideoTracks()[0]);
+    } catch (e) {
+        trace("Unable to change video source: " + e);
+    }
 
     setTimeout(loopVideoSources, 2000);
 }
