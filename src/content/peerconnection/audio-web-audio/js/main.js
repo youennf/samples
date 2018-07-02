@@ -36,6 +36,18 @@ var offerOptions = {
 };
 
 function gotStream(stream) {
+
+  var options = {};
+  var speechEvents = hark(stream, options);
+
+  speechEvents.on('speaking', function() {
+    trace('speaking');
+  });
+
+  speechEvents.on('stopped_speaking', function() {
+    trace('stopped_speaking');
+  });
+
   hangupButton.disabled = false;
   trace('Received local stream');
   localStream = stream;
