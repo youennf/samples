@@ -123,7 +123,7 @@ function call() {
   pc2.onaddstream = gotRemoteStream;
   pc2.ontrack = gotRemoteTrack;
 
-  pc1.addStream(localStream);
+  pc1.addTrack(localStream.getVideoTracks()[0], localStream);
   trace('Added local stream to pc1');
 
   trace('pc1 createOffer start');
@@ -187,7 +187,7 @@ function onSetSessionDescriptionError(error) {
 }
 
 function gotRemoteTrack(e) {
-  //remoteVideo.srcObject = e.streams[0];
+  remoteVideo.srcObject = e.streams[0];
   trace('pc2 received remote track');
 }
 
