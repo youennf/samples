@@ -157,7 +157,6 @@ function onCreateOfferSuccess(desc) {
   );
   trace('pc2 setRemoteDescription start');
 
-  desc.sdp = setCodec(desc.sdp, "VP8");
   pc2.setRemoteDescription(desc).then(
     function() {
       onSetRemoteSuccess(pc2);
@@ -192,7 +191,7 @@ function gotRemoteTrack(e) {
 }
 
 function gotRemoteStream(e) {
-  remoteVideo.srcObject = e.stream;
+  remoteVideo.srcObject = e.streams[0];
   trace('pc2 received remote stream');
 }
 
