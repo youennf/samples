@@ -109,9 +109,9 @@ function call() {
   pc2.oniceconnectionstatechange = function(e) {
     onIceStateChange(pc2, e);
   };
-  pc2.onaddstream = gotRemoteStream;
+  pc2.ontrack = gotRemoteStream;
 
-  pc1.addStream(localStream);
+  pc1.addTrack(localStream.getVideoTracks()[0], localStream);
   trace('Added local stream to pc1');
 
   trace('pc1 createOffer start');
@@ -175,7 +175,7 @@ function onSetSessionDescriptionError(error) {
 }
 
 function gotRemoteStream(e) {
-  remoteVideo.srcObject = e.stream;
+  remoteVideo.srcObject = e.streams[0];
   trace('pc2 received remote stream');
 }
 
