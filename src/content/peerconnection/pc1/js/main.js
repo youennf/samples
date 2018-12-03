@@ -127,6 +127,13 @@ function onCreateSessionDescriptionError(error) {
   trace('Failed to create session description: ' + error.toString());
 }
 
+function setCodec(sdp, codec)
+{
+    return sdp.split('\r\n').filter(line => {
+        return line.indexOf('a=fmtp') === -1 && line.indexOf('a=rtcp-fb') === -1 && (line.indexOf('a=rtpmap') === -1 || line.indexOf(codec) !== -1);
+    }).join('\r\n');
+}
+
 function onCreateOfferSuccess(desc) {
   trace('Offer from pc1\n' + desc.sdp);
   trace('pc1 setLocalDescription start');
@@ -137,6 +144,8 @@ function onCreateOfferSuccess(desc) {
     onSetSessionDescriptionError
   );
   trace('pc2 setRemoteDescription start');
+
+  desc.sdp = setCodec(desc.sdp, "VP8");
   pc2.setRemoteDescription(desc).then(
     function() {
       onSetRemoteSuccess(pc2);
