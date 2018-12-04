@@ -31,6 +31,7 @@ console.log(JSON.stringify(videoTrack.getSettings()));
       console.log("size:" + video.videoWidth + ", " + video.videoHeight);
   })
   stream.getAudioTracks()[0].applyConstraints({echoCancellation: false, volume: 0.1, sampleRate: 48000}).then(() => console.log(stream.getAudioTracks()[0].getSettings()), (e1, e2) => console.log("error" + e1 + "/" + e2));
+alert("orientation:" + window.orientation);
 }
 
 function handleError(error) {
