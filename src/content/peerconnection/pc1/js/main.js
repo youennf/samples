@@ -16,6 +16,7 @@ callButton.onclick = call;
 
 var startTime;
 var localVideo = document.getElementById('localVideo');
+var localVideo2 = document.getElementById('localVideo2');
 var remoteVideo = document.getElementById('remoteVideo');
 
 localVideo.addEventListener('loadedmetadata', function() {
@@ -58,7 +59,12 @@ function getOtherPc(pc) {
 
 function gotStream(stream) {
   trace('Received local stream');
+//localVideo.muted = true;
+//localVideo2.muted = true;
   localVideo.srcObject = stream;
+  localVideo2.srcObject = stream.clone();
+  localAudio.srcObject = new MediaStream([stream.getAudioTracks()[0]]);
+  localAudio2.srcObject = new MediaStream([stream.getAudioTracks()[0]]);
   localStream = stream;
   callButton.disabled = false;
 }
