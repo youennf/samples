@@ -76,7 +76,7 @@ function start() {
   startButton.disabled = true;
   navigator.mediaDevices.getUserMedia({
     audio: true,
-    video: true})
+    video: {height: 768}})
   .then(gotStream, refusedStream)
   .catch(function(e) {
     alert('getUserMedia() error: ' + e);
