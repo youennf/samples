@@ -75,8 +75,7 @@ function start() {
   trace('Requesting local stream');
   startButton.disabled = true;
   navigator.mediaDevices.getUserMedia({
-    audio: true,
-    video: {height: 768}})
+    video: true})
   .then(gotStream, refusedStream)
   .catch(function(e) {
     alert('getUserMedia() error: ' + e);
