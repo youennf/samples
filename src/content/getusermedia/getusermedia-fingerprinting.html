@@ -1,0 +1,54 @@
+<div id="log"></div>
+<div id="reload" onclick="reload()">reload</div>
+
+<script>
+function reload()
+{
+    localStorage.setItem("width", undefined);
+    localStorage.setItem("step", undefined);
+    localStorage.setItem("found", undefined);
+    window.location.reload();
+}
+
+log.innerHTML = localStorage.getItem("width");
+
+function test()
+{
+    let width = parseInt(localStorage.getItem("width"));
+    if (!width)
+        width = 2000;
+
+    log.innerHTML = width;
+
+    if (localStorage.getItem("found") === "true")
+        return;
+
+    let timer = setTimeout(() => {
+        localStorage.setItem("found", true);
+        window.location.reload();
+    }, 200);
+
+    console.log('test');
+
+    navigator.mediaDevices.getUserMedia({video : { width : { min : width } } }).catch((e) => {
+        localStorage.setItem("width", width - 1);
+        clearTimeout(timer);
+        doTest();
+    });
+}
+
+function doTest()
+{
+    console.log('dotest');
+    if (document.visibilityState === 'hidden')
+        test();
+    else {
+        document.onvisibilitychange = (e) => {
+            if (document.visibilityState === 'hidden')
+                test();
+        }
+    }
+}
+
+doTest();
+</script>
