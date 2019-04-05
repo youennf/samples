@@ -71,12 +71,19 @@ function refusedStream(e) {
     alert('getUserMedia() error: ' + e);
 }
 
+var options = { audio: true, video: { height: 768 } };
+function changeResolution() {
+    if (options.video.height)
+        options.video = { width: 160 };
+    else
+        options.video = { height: 768 };
+    logMessage.innerHTML += "<br/>" + "changed gum options to " + JSON.stringify(options);
+}
+
 function start() {
   trace('Requesting local stream');
   startButton.disabled = true;
-  navigator.mediaDevices.getUserMedia({
-    audio: true,
-    video: {height: 768}})
+  navigator.mediaDevices.getUserMedia(options)
   .then(gotStream, refusedStream)
   .catch(function(e) {
     alert('getUserMedia() error: ' + e);
