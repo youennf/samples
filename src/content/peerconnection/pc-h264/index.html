@@ -47,7 +47,9 @@
       <button id="startButton">Start</button>
       <button id="callButton">Call</button>
       <button id="reloadButton" onclick="history.go(0)">Reload</button>
+      <button id="changeButton" onclick="changeResolution()">Change Resolution</button>
     </div>
+    <p id="logMessage"></p>
     <p id="errorMessage"></p>
 
     <p>View the console to see logging. The <code>MediaStream</code> object <code>localStream</code>, and the <code>RTCPeerConnection</code> objects <code>pc1</code> and <code>pc2</code> are in global scope, so you can inspect them in the console as well.</p>

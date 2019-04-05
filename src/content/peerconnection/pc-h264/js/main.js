@@ -71,11 +71,19 @@ function refusedStream(e) {
     alert('getUserMedia() error: ' + e);
 }
 
+var options = { audio: true, video: true };
+function changeResolution() {
+    if (options.video === true)
+        options.video = { width: 160 };
+    else
+        options.video = true;
+    logMessage.innerHTML += "<br/>" + "changed gum options to " + JSON.stringify(options);
+}
+
 function start() {
   trace('Requesting local stream');
   startButton.disabled = true;
-  navigator.mediaDevices.getUserMedia({
-    video: true})
+  navigator.mediaDevices.getUserMedia(options)
   .then(gotStream, refusedStream)
   .catch(function(e) {
     alert('getUserMedia() error: ' + e);
