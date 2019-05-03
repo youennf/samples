@@ -90,6 +90,7 @@ async function call() {
     console.log(`Using audio device: ${audioTracks[0].label}`);
   }
   const configuration = getSelectedSdpSemantics();
+  configuration.iceServers = [{"urls":["stun:stun.l.google.com:19302"]}];
   console.log('RTCPeerConnection configuration:', configuration);
   pc1 = new RTCPeerConnection(configuration);
   console.log('Created local peer connection object pc1');
