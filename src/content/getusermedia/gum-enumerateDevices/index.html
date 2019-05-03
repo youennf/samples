@@ -1,0 +1,13 @@
+<link rel="stylesheet" href="../../../css/main.css">
+<body>
+<a id="link" onclick="changeHostname()"></a>
+<iframe src="http://127.0.0.1:8888/src/content/getusermedia/gum-enumerateDevices/frame.html" width=100% height=100% allow="camera; microphone"></iframe>
+<script>
+link.innerHTML = window.location.host;
+function changeHostname()
+{
+    const newHostname = window.location.hostname === "localhost" ? "127.0.0.1" : "localhost";
+    window.location = window.location.href.replace(window.location.hostname, newHostname);
+}
+</script>
+</body>

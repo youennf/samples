@@ -96,7 +96,8 @@ function start() {
   // on whether the un-muxed RTCP checkbox is checked.
   var config = {'iceServers': iceServers, iceTransportPolicy: iceTransports,
       rtcpMuxPolicy: rtcpMuxCheck.checked ? 'negotiate' : 'require'};
-  var pcConstraints = {};
+  alert(JSON.stringify(config));
+    var pcConstraints = {};
   var offerOptions = {offerToReceiveAudio: 1};
   // Whether we gather IPv6 candidates.
   pcConstraints.optional = [{'googIPv6': ipv6Check.checked}];
