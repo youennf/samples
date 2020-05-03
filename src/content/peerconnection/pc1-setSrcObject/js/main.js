@@ -45,8 +45,8 @@ let localStream;
 let pc1;
 let pc2;
 const offerOptions = {
-  offerToReceiveAudio: 1,
-  offerToReceiveVideo: 1
+//  offerToReceiveAudio: 1,
+//  offerToReceiveVideo: 1
 };
 
 function getName(pc) {
@@ -61,7 +61,7 @@ async function start() {
   console.log('Requesting local stream');
   startButton.disabled = true;
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
     console.log('Received local stream');
     localVideo.srcObject = stream;
     localStream = stream;
@@ -164,6 +164,7 @@ function onSetSessionDescriptionError(error) {
 function gotRemoteStream(e) {
   if (remoteVideo.srcObject !== e.streams[0]) {
     remoteVideo.srcObject = e.streams[0];
+    remoteVideo.play();
     console.log('pc2 received remote stream');
   }
 }
