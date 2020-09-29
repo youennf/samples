@@ -47,11 +47,7 @@ function handleSuccess(stream) {
   recordButton.disabled = false;
   console.log('getUserMedia() got stream: ', stream);
   window.stream = stream;
-  if (window.URL) {
-    gumVideo.src = window.URL.createObjectURL(stream);
-  } else {
-    gumVideo.src = stream;
-  }
+    gumVideo.srcObject = stream;
 }
 
 function handleError(error) {
@@ -96,19 +92,7 @@ function toggleRecording() {
 
 function startRecording() {
   recordedBlobs = [];
-  var options = {mimeType: 'video/webm;codecs=vp9'};
-  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-    console.log(options.mimeType + ' is not Supported');
-    options = {mimeType: 'video/webm;codecs=vp8'};
-    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-      console.log(options.mimeType + ' is not Supported');
-      options = {mimeType: 'video/webm'};
-      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        console.log(options.mimeType + ' is not Supported');
-        options = {mimeType: ''};
-      }
-    }
-  }
+  var options = {};
   try {
     mediaRecorder = new MediaRecorder(window.stream, options);
   } catch (e) {
@@ -134,17 +118,17 @@ function stopRecording() {
 }
 
 function play() {
-  var superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
+  var superBuffer = new Blob(recordedBlobs, {type: 'video/mp4'});
   recordedVideo.src = window.URL.createObjectURL(superBuffer);
 }
 
 function download() {
-  var blob = new Blob(recordedBlobs, {type: 'video/webm'});
+  var blob = new Blob(recordedBlobs, {type: 'video/mp4'});
   var url = window.URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.style.display = 'none';
   a.href = url;
-  a.download = 'test.webm';
+  a.download = 'test.mp4';
   document.body.appendChild(a);
   a.click();
   setTimeout(function() {
