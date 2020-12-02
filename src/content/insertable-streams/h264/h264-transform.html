@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+        <video id="video1" controls autoplay></video>
+        <video id="video2" controls autoplay></video>
+        <script>
+let skipTransform = false;
+function prepareSender(sender)
+{
+    if (skipTransform)
+        return;
+    if (window.RTCRtpScriptTransform) {
+        sender.transform = new RTCRtpScriptTransform(worker, 'MyTransform');
+        return;
+    }
+    let senderStreams = sender.createEncodedStreams();
+    const readable = senderStreams.readable || senderStreams.readableStream;
+    const writable = senderStreams.writable || senderStreams.writableStream;
+    worker.postMessage({ side: 'sender', readable, writable }, [readable, writable]);
+}
+
+function prepareReceiver(receiver)
+{
+    if (skipTransform)
+        return;
+    if (window.RTCRtpScriptTransform) {
+        receiver.transform = new RTCRtpScriptTransform(worker, 'MyTransform');
+        return;
+    }
+    let receiverStreams = receiver.createEncodedStreams();
+    const readable = receiverStreams.readable || senderStreams.readableStream;
+    const writable = receiverStreams.writable || senderStreams.writableStream;
+    worker.postMessage({ side: 'receiver', readable, writable }, [readable, writable]);
+}
+
+let pc1, pc2, localStream;
+async function test()
+{
+    worker = new Worker('h264-transform-worker.js');
+    const data = await new Promise(resolve => worker.onmessage = (event) => resolve(event.data));
+
+    localStream = await navigator.mediaDevices.getUserMedia({video: true});
+    video1.srcObject = localStream;
+
+    pc1 = new RTCPeerConnection({encodedInsertableStreams: !skipTransform});
+    pc2 = new RTCPeerConnection({encodedInsertableStreams: !skipTransform});
+
+    pc1.onicecandidate = (e) => {
+        if (e.candidate)
+            pc2.addIceCandidate(e.candidate);
+    }
+    pc2.onicecandidate = (e) => {
+        if (e.candidate)
+            pc1.addIceCandidate(e.candidate);
+    }
+
+    const sender = pc1.addTrack(localStream.getTracks()[0], localStream);
+    prepareSender(sender);
+    pc2.ontrack = (e) => {
+        video2.srcObject = e.streams[0];
+        prepareReceiver(e.receiver);
+    }
+
+    const offer = await pc1.createOffer();
+    await pc1.setLocalDescription(offer);
+    await pc2.setRemoteDescription(pc1.localDescription);
+    const answer = await pc2.createAnswer();
+    await pc2.setLocalDescription(answer);
+    await pc1.setRemoteDescription(pc2.localDescription);
+}
+window.onload = test;
+        </script>
+    </body>
+</html>
